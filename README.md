@@ -131,7 +131,7 @@ public/
 
 Esta aplicación consume una API REST en **FastAPI**, desplegada en **Google Cloud Run**.
 
-➡️ Repositorio de la API: [API-CERTIFICACIONES](https://github.com/Straaizo/API-LH-CERTIFICACIONES)
+➡️ Repositorio de la API: [API-LH-CERTIFICACIONES](https://github.com/Straaizo/API-LH-CERTIFICACIONES)
 
 ---
 
