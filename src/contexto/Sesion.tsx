@@ -1,0 +1,187 @@
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { AUTH_MODO, api, configurarAuth } from '../api'
+import type { Catalogos, Filtros, Usuario } from '../tipos'
+
+interface ValorSesion {
+  usuario: Usuario | null
+  catalogos: Catalogos | null
+  cargando: boolean
+  error: string | null
+  filtros: Filtros
+  setFiltros: (f: Filtros) => void
+  ingresarDemo: (id: number) => Promise<void>
+  ingresarFirebase: (email: string, clave: string) => Promise<void>
+  salir: () => Promise<void>
+  esCertificaciones: boolean
+  puedeEscribir: boolean
+  recargarCatalogos: () => Promise<void>
+}
+
+const ContextoSesion = createContext<ValorSesion | null>(null)
+const CLAVE_DEMO = 'certificaciones.usuarioDemo'
+const CLAVE_FILTROS = 'certificaciones.filtros'
+
+function leerLocal(clave: string): string | null {
+  try {
+    return localStorage.getItem(clave)
+  } catch {
+    return null
+  }
+}
+
+function guardarLocal(clave: string, valor: string | null) {
+  try {
+    if (valor === null) localStorage.removeItem(clave)
+    else localStorage.setItem(clave, valor)
+  } catch {
+    /* almacenamiento no disponible */
+  }
+}
+
+async function firebaseAuth() {
+  const { initializeApp, getApps } = await import('firebase/app')
+  const auth = await import('firebase/auth')
+  if (!getApps().length) {
+    initializeApp({
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    })
+  }
+  return { auth, instancia: auth.getAuth() }
+}
+
+export function ProveedorSesion({ children }: { children: ReactNode }) {
+  const [usuario, setUsuario] = useState<Usuario | null>(null)
+  const [catalogos, setCatalogos] = useState<Catalogos | null>(null)
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [filtros, setFiltrosEstado] = useState<Filtros>(() => {
+    try {
+      return JSON.parse(leerLocal(CLAVE_FILTROS) ?? '{}') as Filtros
+    } catch {
+      return {}
+    }
+  })
+
+  const setFiltros = useCallback((f: Filtros) => {
+    setFiltrosEstado(f)
+    guardarLocal(CLAVE_FILTROS, JSON.stringify(f))
+  }, [])
+
+  const cargarSesion = useCallback(async () => {
+    try {
+      const [yo, cat] = await Promise.all([api.get<Usuario>('/yo'), api.get<Catalogos>('/catalogos')])
+      setUsuario(yo)
+      setCatalogos(cat)
+      setError(null)
+      setFiltrosEstado((prev) => {
+        // Temporada actual por defecto; se descartan filtros de unidades sin acceso
+        const unidadValida = prev.unidad_id && cat.unidades.some((u) => u.id === prev.unidad_id)
+        return {
+          ...prev,
+          unidad_id: unidadValida ? prev.unidad_id : undefined,
+          protocolo_id: undefined,
+          temporada_id: prev.temporada_id ?? cat.temporadas.find((t) => t.actual)?.id,
+        }
+      })
+    } catch (e) {
+      setUsuario(null)
+      setError(e instanceof Error ? e.message : 'Error al iniciar sesión')
+      throw e
+    }
+  }, [])
+
+  useEffect(() => {
+    const iniciar = async () => {
+      try {
+        if (AUTH_MODO === 'demo') {
+          const id = leerLocal(CLAVE_DEMO)
+          configurarAuth(async () => {
+            const actual = leerLocal(CLAVE_DEMO)
+            return actual ? { 'X-Usuario-Demo': actual } : ({} as Record<string, string>)
+          })
+          if (id) await cargarSesion()
+        } else {
+          const { auth, instancia } = await firebaseAuth()
+          configurarAuth(async () => {
+            const token = await instancia.currentUser?.getIdToken()
+            return token ? { Authorization: `Bearer ${token}` } : ({} as Record<string, string>)
+          })
+          await new Promise<void>((resolver) => {
+            const cancelar = auth.onAuthStateChanged(instancia, async (u) => {
+              cancelar()
+              if (u) await cargarSesion().catch(() => undefined)
+              resolver()
+            })
+          })
+        }
+      } catch {
+        guardarLocal(CLAVE_DEMO, null)
+      } finally {
+        setCargando(false)
+      }
+    }
+    void iniciar()
+  }, [cargarSesion])
+
+  const ingresarDemo = async (id: number) => {
+    guardarLocal(CLAVE_DEMO, String(id))
+    setFiltros({})
+    await cargarSesion()
+  }
+
+  const ingresarFirebase = async (email: string, clave: string) => {
+    const { auth, instancia } = await firebaseAuth()
+    await auth.signInWithEmailAndPassword(instancia, email, clave)
+    await cargarSesion()
+  }
+
+  const salir = async () => {
+    if (AUTH_MODO === 'demo') guardarLocal(CLAVE_DEMO, null)
+    else {
+      const { auth, instancia } = await firebaseAuth()
+      await auth.signOut(instancia)
+    }
+    setUsuario(null)
+    setCatalogos(null)
+  }
+
+  const recargarCatalogos = async () => {
+    setCatalogos(await api.get<Catalogos>('/catalogos'))
+  }
+
+  return (
+    <ContextoSesion.Provider
+      value={{
+        usuario,
+        catalogos,
+        cargando,
+        error,
+        filtros,
+        setFiltros,
+        ingresarDemo,
+        ingresarFirebase,
+        salir,
+        esCertificaciones: usuario?.rol === 'certificaciones',
+        puedeEscribir: !!usuario && usuario.rol !== 'lectura',
+        recargarCatalogos,
+      }}
+    >
+      {children}
+    </ContextoSesion.Provider>
+  )
+}
+
+export function useSesion(): ValorSesion {
+  const valor = useContext(ContextoSesion)
+  if (!valor) throw new Error('useSesion fuera de ProveedorSesion')
+  return valor
+}
+
+/** Sesión ya iniciada: usuario y catálogos garantizados. */
+export function useSesionActiva() {
+  const s = useSesion()
+  if (!s.usuario || !s.catalogos) throw new Error('Sesión no iniciada')
+  return { ...s, usuario: s.usuario, catalogos: s.catalogos }
+}

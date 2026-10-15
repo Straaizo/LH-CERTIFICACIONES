@@ -1,0 +1,24 @@
+node_modules/
+dist/
+dist-celular/
+*.tsbuildinfo
+.firebase/
+firebase-debug.log
+
+# Variables de entorno y credenciales
+.env*
+!.env.example
+*.pem
+*.key
+credenciales*.json
+service-account*.json
+
+# Datos
+*.sql
+*.csv
+*.xlsx
+*.xls
+**/privado/
+
+# Instrucciones de trabajo locales (no se publican)
+CLAUDE.md

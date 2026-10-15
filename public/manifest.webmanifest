@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Certificaciones VS y LH",
+  "short_name": "Certificaciones",
+  "description": "Documentos, registros, auditorías, laboratorio y medio ambiente de Agrícola Viento Sur y Agrícola La Hornilla.",
+  "lang": "es-CL",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0b7a0b",
+  "background_color": "#eef2eb",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Registros", "url": "/registros?seccion=registros", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "No conformidades", "url": "/no-conformidades", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Laboratorio", "url": "/laboratorio", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

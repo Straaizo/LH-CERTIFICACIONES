@@ -1,0 +1,249 @@
+@import "tailwindcss";
+
+/*
+  Base visual compartida con el Portal Interno La Hornilla.
+  Se redefinen las paletas que usa toda la app: emerald = verde de marca, slate = neutros con tinte verde.
+*/
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-emerald-50: #eef8ec;
+  --color-emerald-100: #d8efd3;
+  --color-emerald-200: #b0dfa8;
+  --color-emerald-300: #82cb77;
+  --color-emerald-400: #52b146;
+  --color-emerald-500: #2b9a20;
+  --color-emerald-600: #138a10;
+  --color-emerald-700: #0b7a0b;
+  --color-emerald-800: #09650c;
+  --color-emerald-900: #0a520e;
+  --color-emerald-950: #052e07;
+
+  --color-slate-50: #f4f7f2;
+  --color-slate-100: #e9eee6;
+  --color-slate-200: #dae1d5;
+  --color-slate-300: #c4cdbe;
+  --color-slate-400: #838d7e;
+  --color-slate-500: #5a6455;
+  --color-slate-600: #50594c;
+  --color-slate-700: #3b4338;
+  --color-slate-800: #262d24;
+  --color-slate-900: #172016;
+  --color-slate-950: #0c110b;
+
+  --color-fondo: #eef2eb;
+  --color-superficie: #f9fbf7;
+  --color-marca: #0b7a0b;
+  --color-marca-oscura: #075f0b;
+}
+
+@layer base {
+  body {
+    @apply bg-fondo font-sans text-slate-800 antialiased;
+    font-feature-settings: "ss01", "tnum";
+  }
+}
+
+/*
+  Barras de desplazamiento con la misma base del portal: delgadas, redondeadas, sin riel visible.
+  Chrome/Edge/Safari usan ::-webkit-scrollbar; Firefox, scrollbar-width y scrollbar-color.
+  .scroll-oscuro: sobre fondos verdes (menú lateral).
+*/
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: var(--color-slate-300);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-slate-400);
+}
+/* Barra del contenido (bajo el encabezado): más ancha para alcanzarla con touchpad o mouse */
+.scroll-principal::-webkit-scrollbar {
+  width: 14px;
+}
+.scroll-principal::-webkit-scrollbar-thumb {
+  border-width: 2px;
+  min-height: 48px;
+  background-color: var(--color-slate-400);
+}
+.scroll-principal::-webkit-scrollbar-thumb:hover,
+.scroll-principal::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-slate-500);
+}
+.scroll-principal::-webkit-scrollbar-track {
+  background-color: rgb(0 0 0 / 0.03);
+}
+.scroll-oscuro::-webkit-scrollbar-thumb {
+  background-color: rgb(255 255 255 / 0.22);
+}
+.scroll-oscuro::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(255 255 255 / 0.4);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-slate-300) transparent;
+  }
+  .scroll-oscuro {
+    scrollbar-color: rgb(255 255 255 / 0.25) transparent;
+  }
+  .scroll-principal {
+    scrollbar-width: auto;
+    scrollbar-color: var(--color-slate-400) transparent;
+  }
+}
+
+/* Tiras deslizables (pestañas, chips de cláusulas): se deslizan sin mostrar barra */
+.sin-barra {
+  scrollbar-width: none;
+}
+.sin-barra::-webkit-scrollbar {
+  display: none;
+}
+
+/* Animaciones de los gráficos: trazo de líneas, aparición y crecimiento. Se apagan con "reducir movimiento". */
+@keyframes trazar {
+  to { stroke-dashoffset: 0; }
+}
+.animar-trazo {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: trazar 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.animar-aparecer {
+  animation: aparecer 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@keyframes crecer-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.animar-crecer {
+  animation: crecer-x 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s backwards;
+}
+@keyframes desvanecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animar-desvanecer {
+  animation: desvanecer 0.8s ease 0.6s backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animar-trazo, .animar-aparecer, .animar-crecer, .animar-desvanecer {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Esqueletos de carga: bloque con un brillo que lo recorre */
+.hueso {
+  position: relative;
+  overflow: hidden;
+  background-color: rgb(218 225 213 / 0.7);
+}
+.hueso::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
+  animation: brillo 1.5s ease-in-out infinite;
+}
+.hueso-oscuro {
+  background-color: rgb(255 255 255 / 0.14);
+}
+.hueso-oscuro::after {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.18), transparent);
+}
+@keyframes brillo {
+  to { transform: translateX(100%); }
+}
+@keyframes desvanecer-rapido {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* Aparece con un leve retraso: si la respuesta es inmediata, no alcanza a parpadear */
+.animar-desvanecer-rapido {
+  animation: desvanecer-rapido 0.3s ease 0.12s backwards;
+}
+/* Entrada suave de cada página. 'backwards' y no 'both': una animación que sigue en efecto con transform
+   convierte al contenedor en referencia de los elementos fijos y los modales quedarían mal ubicados. */
+.animar-pagina {
+  animation: aparecer 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hueso::after { animation: none; display: none; }
+  .animar-desvanecer-rapido, .animar-pagina { animation: none; }
+}
+
+/* Armado de la comparativa: entrada de la tarjeta y el ✓ de cada etapa */
+@keyframes escala {
+  from { opacity: 0; transform: scale(0.97) translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.animar-escala {
+  animation: escala 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@keyframes pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animar-pop {
+  animation: pop 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animar-escala, .animar-pop { animation: none; }
+}
+
+/* Animaciones solo con transform/opacity (las procesa la GPU, sin recalcular la página) */
+@keyframes desplazar {
+  from { transform: var(--desde); }
+}
+.animar-desplazar, .animar-banda {
+  animation: desplazar 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@keyframes subir {
+  from { opacity: 0; transform: translateY(16px); }
+}
+.animar-subir {
+  animation: subir 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@keyframes velo {
+  from { opacity: 0; }
+}
+.animar-velo {
+  animation: velo 0.2s ease-out backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animar-desplazar, .animar-banda, .animar-subir, .animar-velo { animation: none; }
+}
+
+/* Aplicación instalada (o su vista simulada): se comporta como app, no como página web */
+.modo-app {
+  -webkit-tap-highlight-color: transparent;
+}
+.modo-app body {
+  overscroll-behavior: none;
+}
+.modo-app header,
+.modo-app nav {
+  -webkit-user-select: none;
+  user-select: none;
+}

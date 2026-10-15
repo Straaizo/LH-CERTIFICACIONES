@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es-CL">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b7a0b" />
+    <meta name="description" content="Documentos, registros, auditorías, laboratorio y medio ambiente de Agrícola Viento Sur y Agrícola La Hornilla." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- iPhone y iPad: abrir a pantalla completa desde el ícono de inicio -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Certificaciones" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="/logo_lh.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <title>Certificaciones</title>
+    <!-- Esqueleto inicial: se ve apenas llega la página, antes de que cargue el código; React lo reemplaza al iniciar -->
+    <style>
+      body { margin: 0; }
+      #esqueleto-inicial { display: flex; height: 100dvh; overflow: hidden; background: #eef2eb; font-family: system-ui, sans-serif; }
+      #esqueleto-inicial .lado { width: 288px; flex-shrink: 0; background: linear-gradient(#0b7a0b, #0a520e); padding: 20px; }
+      #esqueleto-inicial .cuerpo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      #esqueleto-inicial .cabeza { height: 72px; flex-shrink: 0; background: linear-gradient(90deg, #0b7a0b, #09650c); display: flex; align-items: center; gap: 12px; padding: 0 24px; }
+      #esqueleto-inicial .contenido { padding: 32px; max-width: 1440px; width: 100%; box-sizing: border-box; }
+      #esqueleto-inicial .b { border-radius: 8px; background: rgb(218 225 213 / 0.7); position: relative; overflow: hidden; }
+      #esqueleto-inicial .o { border-radius: 12px; background: rgb(255 255 255 / 0.14); position: relative; overflow: hidden; }
+      #esqueleto-inicial .b::after, #esqueleto-inicial .o::after {
+        content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.5), transparent);
+        animation: brillo-inicial 1.5s ease-in-out infinite;
+      }
+      #esqueleto-inicial .fila { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 32px; }
+      @keyframes brillo-inicial { to { transform: translateX(100%); } }
+      @media (max-width: 1023px) { #esqueleto-inicial .lado { display: none; } #esqueleto-inicial .contenido { padding: 24px 16px; } }
+      @media (max-width: 640px) { #esqueleto-inicial .fila { grid-template-columns: repeat(2, 1fr); } }
+      @media (prefers-reduced-motion: reduce) { #esqueleto-inicial .b::after, #esqueleto-inicial .o::after { animation: none; display: none; } }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div id="esqueleto-inicial" role="status" aria-busy="true" aria-label="Cargando Certificaciones">
+        <div class="lado">
+          <div class="o" style="height: 40px; width: 160px"></div>
+          <div class="o" style="height: 36px; margin-top: 40px"></div>
+          <div class="o" style="height: 36px; margin-top: 12px"></div>
+          <div class="o" style="height: 36px; margin-top: 12px"></div>
+          <div class="o" style="height: 36px; margin-top: 12px"></div>
+          <div class="o" style="height: 36px; margin-top: 12px"></div>
+        </div>
+        <div class="cuerpo">
+          <div class="cabeza">
+            <div class="o" style="height: 32px; width: 150px; border-radius: 999px"></div>
+            <div class="o" style="height: 40px; width: 40px; border-radius: 999px; margin-left: auto"></div>
+          </div>
+          <div class="contenido">
+            <div class="b" style="height: 12px; width: 160px"></div>
+            <div class="b" style="height: 40px; width: 260px; max-width: 80%; margin-top: 12px"></div>
+            <div class="b" style="height: 16px; width: 380px; max-width: 90%; margin-top: 12px"></div>
+            <div class="fila">
+              <div class="b" style="height: 96px; border-radius: 16px"></div>
+              <div class="b" style="height: 96px; border-radius: 16px"></div>
+              <div class="b" style="height: 96px; border-radius: 16px"></div>
+              <div class="b" style="height: 96px; border-radius: 16px"></div>
+            </div>
+            <div class="b" style="height: 280px; margin-top: 20px; border-radius: 16px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
