@@ -87,7 +87,7 @@ export interface Registro {
   plantilla: { id: number; nombre: string }
   unidad: UnidadRef
   temporada_id: number | null
-  responsable: { id: number; nombre: string } | null
+  responsable: { id: string; nombre: string } | null
   /** Última vez que alguien del campo guardó o envió */
   fecha_revision: string | null
   dias_sin_revision: number
@@ -532,7 +532,7 @@ function NuevoRegistro({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
         plantilla_id: Number(plantillaId),
         unidad_id: Number(unidadId),
         titulo: titulo.trim(),
-        responsable_id: responsableId ? Number(responsableId) : null,
+        responsable_id: responsableId || null,
       })
     })
     if (ok && r.creado) onCreado(r.creado)

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { AUTH_MODO, api, configurarAuth } from '../api'
-import type { Catalogos, Filtros, Usuario } from '../tipos'
+import { AUTH_MODO, api, configurarAuth, guardarTokens, tokenAcceso, type Tokens } from '../api'
+import type { Catalogos, Filtros, Permiso, Usuario } from '../tipos'
 
 interface ValorSesion {
   usuario: Usuario | null
@@ -9,11 +9,13 @@ interface ValorSesion {
   error: string | null
   filtros: Filtros
   setFiltros: (f: Filtros) => void
-  ingresarDemo: (id: number) => Promise<void>
-  ingresarFirebase: (email: string, clave: string) => Promise<void>
+  ingresarDemo: (id: string) => Promise<void>
+  ingresar: (usuario: string, clave: string) => Promise<void>
   salir: () => Promise<void>
   esCertificaciones: boolean
   puedeEscribir: boolean
+  /** Puede editar en el módulo: tiene el permiso del portal web o es administrador */
+  puede: (permiso: Permiso) => boolean
   recargarCatalogos: () => Promise<void>
 }
 
@@ -36,19 +38,6 @@ function guardarLocal(clave: string, valor: string | null) {
   } catch {
     /* almacenamiento no disponible */
   }
-}
-
-async function firebaseAuth() {
-  const { initializeApp, getApps } = await import('firebase/app')
-  const auth = await import('firebase/auth')
-  if (!getApps().length) {
-    initializeApp({
-      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    })
-  }
-  return { auth, instancia: auth.getAuth() }
 }
 
 export function ProveedorSesion({ children }: { children: ReactNode }) {
@@ -103,21 +92,15 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
           })
           if (id) await cargarSesion()
         } else {
-          const { auth, instancia } = await firebaseAuth()
           configurarAuth(async () => {
-            const token = await instancia.currentUser?.getIdToken()
+            const token = tokenAcceso()
             return token ? { Authorization: `Bearer ${token}` } : ({} as Record<string, string>)
           })
-          await new Promise<void>((resolver) => {
-            const cancelar = auth.onAuthStateChanged(instancia, async (u) => {
-              cancelar()
-              if (u) await cargarSesion().catch(() => undefined)
-              resolver()
-            })
-          })
+          if (tokenAcceso()) await cargarSesion()
         }
       } catch {
         guardarLocal(CLAVE_DEMO, null)
+        guardarTokens(null)
       } finally {
         setCargando(false)
       }
@@ -125,27 +108,29 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     void iniciar()
   }, [cargarSesion])
 
-  const ingresarDemo = async (id: number) => {
-    guardarLocal(CLAVE_DEMO, String(id))
+  const ingresarDemo = async (id: string) => {
+    guardarLocal(CLAVE_DEMO, id)
     setFiltros({})
     await cargarSesion()
   }
 
-  const ingresarFirebase = async (email: string, clave: string) => {
-    const { auth, instancia } = await firebaseAuth()
-    await auth.signInWithEmailAndPassword(instancia, email, clave)
+  const ingresar = async (identificador: string, clave: string) => {
+    guardarTokens(await api.post<Tokens>('/auth/login', { usuario: identificador.trim(), clave }))
+    setFiltros({})
     await cargarSesion()
   }
 
   const salir = async () => {
     if (AUTH_MODO === 'demo') guardarLocal(CLAVE_DEMO, null)
-    else {
-      const { auth, instancia } = await firebaseAuth()
-      await auth.signOut(instancia)
-    }
+    else guardarTokens(null)
     setUsuario(null)
     setCatalogos(null)
   }
+
+  const puede = useCallback(
+    (permiso: Permiso) => !!usuario && (usuario.rol === 'certificaciones' || usuario.permisos.includes(permiso)),
+    [usuario],
+  )
 
   const recargarCatalogos = async () => {
     setCatalogos(await api.get<Catalogos>('/catalogos'))
@@ -161,10 +146,11 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
         filtros,
         setFiltros,
         ingresarDemo,
-        ingresarFirebase,
+        ingresar,
         salir,
         esCertificaciones: usuario?.rol === 'certificaciones',
         puedeEscribir: !!usuario && usuario.rol !== 'lectura',
+        puede,
         recargarCatalogos,
       }}
     >

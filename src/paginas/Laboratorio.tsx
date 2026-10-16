@@ -30,7 +30,8 @@ function EstadoAnalisis({ a }: { a: Analisis }) {
 }
 
 export function Laboratorio() {
-  const { catalogos, filtros, puedeEscribir } = useSesionActiva()
+  const { catalogos, filtros, puede } = useSesionActiva()
+  const puedeEscribir = puede('LABORATORIO_EDITAR')
   const [tipoId, setTipoId] = useState('')
   const [tipoUnidad, setTipoUnidad] = useState<'' | 'campo' | 'planta'>('')
   const [soloFuera, setSoloFuera] = useState(false)
@@ -296,7 +297,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
 
   const tipo = tipos.find((t) => t.id === tipoId)
   const fuentes = catalogos.fuentes_agua.filter((f) => unidadId !== undefined && f.unidades.includes(unidadId))
-  const especies = catalogos.especies.filter((e) => unidadId !== undefined && e.unidades.includes(unidadId))
+  const especies = catalogos.especies
 
   const quitarLeido = (campo: CampoLeido) =>
     setLeidos((s) => {
@@ -334,11 +335,6 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
   const cambiarUnidad = (id: number | undefined) => {
     setUnidadId(id)
     setFuenteId(undefined)
-    const especie = catalogos.especies.find((e) => e.id === especieId)
-    if (especie && (id === undefined || !especie.unidades.includes(id))) {
-      setEspecieId(undefined)
-      quitarLeido('especie')
-    }
   }
 
   const cambiarFila = (clave: number, cambios: Partial<FilaResultado>) =>

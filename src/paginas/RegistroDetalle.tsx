@@ -66,7 +66,8 @@ function textoSimple(tipo: TipoColumna | 'texto', v: unknown): string {
 
 export function RegistroDetalle() {
   const { id } = useParams()
-  const { esCertificaciones, puedeEscribir, usuario } = useSesionActiva()
+  const { esCertificaciones, puede, usuario } = useSesionActiva()
+  const puedeEscribir = puede('REGISTROS_EDITAR')
   const { datos: registro, cargando, error, recargar, setDatos } = useDatos<Registro>(`/registros/${id}`)
   const historial = useDatos<EventoRegistro[]>(`/registros/${id}/historial`)
   const accion = useAccion()

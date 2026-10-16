@@ -100,11 +100,12 @@ src/
 ├── main.tsx / App.tsx          # Entrada y rutas
 ├── api.ts                      # Comunicación con la API
 ├── contexto/
-│   └── Sesion.tsx              # Usuario, catálogos y filtros (empresa, sucursal, temporada)
+│   └── Sesion.tsx              # Sesión (usuario o correo + clave), permisos por módulo, catálogos y filtros
 ├── componentes/
 │   ├── Layout.tsx              # Encabezado y menú
 │   ├── ui.tsx                  # Botones, tarjetas, ventanas, campos y avisos
 │   ├── Desplegable.tsx         # Listas desplegables
+│   ├── Carrusel.tsx            # Fotos del ingreso (originales en fotos-carrusel/, versiones en src/assets/carrusel/)
 │   ├── Esqueletos.tsx          # Pantallas de carga
 │   ├── graficos.tsx            # Gráficos de medio ambiente
 │   ├── VersionNorma.tsx        # Puntos de control de una versión de norma

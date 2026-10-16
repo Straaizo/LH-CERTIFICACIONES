@@ -130,7 +130,8 @@ function unidadInicial(unidades: UnidadRef[], filtro?: number): number | undefin
 // ---------- Huella de carbono ----------
 
 function HuellaCarbono({ soloCombustible = false }: { soloCombustible?: boolean }) {
-  const { catalogos, filtros, puedeEscribir } = useSesionActiva()
+  const { catalogos, filtros, puede } = useSesionActiva()
+  const puedeEscribir = puede('AMBIENTE_EDITAR')
   const huella = useDatos<Huella>(soloCombustible ? null : '/ambiente/huella', { ...filtros })
   const consumos = useDatos<Consumo[]>('/ambiente/consumos', { ...filtros })
   const conceptos = useDatos<Concepto[]>('/ambiente/conceptos')
@@ -297,7 +298,8 @@ function HuellaCarbono({ soloCombustible = false }: { soloCombustible?: boolean 
 // ---------- Reciclaje ----------
 
 function Reciclaje() {
-  const { catalogos, filtros, puedeEscribir } = useSesionActiva()
+  // El reciclaje lo registra el equipo de certificaciones
+  const { catalogos, filtros, esCertificaciones: puedeEscribir } = useSesionActiva()
   const registros = useDatos<RegistroReciclaje[]>('/ambiente/reciclaje', { ...filtros })
   const { avisar, nodo: nodoAviso } = useAviso()
   const accion = useAccion()

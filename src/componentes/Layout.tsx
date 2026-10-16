@@ -147,8 +147,8 @@ export function Layout() {
       </span>
       {!compacto && (
         <div className="min-w-0 leading-tight text-white">
-          <p className="truncate text-[17px] font-bold tracking-tight">Certificaciones</p>
-          <p className="truncate font-mono text-[11px] uppercase tracking-[0.2em] text-white/70">Viento Sur · Hornilla</p>
+          <p className="truncate text-[16px] font-bold tracking-tight">Portal Certificaciones</p>
+          <p className="truncate font-mono text-[11px] uppercase tracking-[0.2em] text-white/70">Viento Sur · La Hornilla</p>
         </div>
       )}
     </div>
@@ -265,7 +265,7 @@ function VerComo({ enMenu = false }: { enMenu?: boolean }) {
           icono: <Icono className="h-4 w-4" />,
         }
       })}
-      onCambio={(v) => void ingresarDemo(Number(v)).then(() => navegar('/'))}
+      onCambio={(v) => void ingresarDemo(v).then(() => navegar('/'))}
     />
   )
 }

@@ -24,27 +24,32 @@ function Sitios() {
     <div className="grid gap-4 lg:grid-cols-2">
       {catalogos.empresas.map((e) => {
         const unidades = catalogos.unidades.filter((u) => u.empresa_id === e.id)
-        const ubicaciones = [...new Set(unidades.map((u) => u.ubicacion ?? 'Sin ubicación'))]
+        // Agrupadas por tipo de sucursal (general_dim_sucursaltipo): Campo, Packing…
+        const tipos = [...new Set(unidades.map((u) => u.tipo_nombre))]
         return (
           <Tarjeta key={e.id} titulo={`${e.codigo} · ${e.nombre}`}>
             {!unidades.length ? (
               <Vacio>Sin sucursales visibles</Vacio>
             ) : (
               <ul className="space-y-3">
-                {ubicaciones.map((ub) => (
-                  <li key={ub}>
-                    <p className="text-sm font-semibold text-slate-800">{ub}</p>
+                {tipos.map((tipo) => (
+                  <li key={tipo}>
+                    <p className="text-sm font-semibold text-slate-800">{tipo}</p>
                     <ul className="mt-1 space-y-2 border-l-2 border-slate-200 pl-3">
                       {unidades
-                        .filter((u) => (u.ubicacion ?? 'Sin ubicación') === ub)
+                        .filter((u) => u.tipo_nombre === tipo)
                         .map((u) => {
+                          const normas = catalogos.protocolos.filter((p) => p.unidades_aplica.includes(u.id))
                           const areas = catalogos.areas.filter((a) => a.unidad_id === u.id)
                           return (
                             <li key={u.id}>
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="text-sm text-slate-800">{u.nombre}</span>
-                                <Insignia tono={u.tipo === 'planta' ? 'violeta' : 'verde'}>{etiquetaAmbito(u.tipo)}</Insignia>
+                                <span className="font-mono text-[11px] text-slate-400">#{u.id}</span>
                               </div>
+                              {normas.length > 0 && (
+                                <p className="mt-0.5 text-xs text-slate-500">{normas.map((p) => p.nombre).join(' · ')}</p>
+                              )}
                               {areas.length > 0 && (
                                 <div className="mt-1 flex flex-wrap gap-1">
                                   {areas.map((a) => (
@@ -209,6 +214,9 @@ function Usuarios() {
   const { catalogos } = useSesionActiva()
   return (
     <Tarjeta>
+      <p className="mb-2 text-sm text-slate-500">
+        Usuarios con acceso a Certificaciones. El acceso, los permisos y las sucursales de cada uno se asignan en el portal web.
+      </p>
       <ul className="divide-y divide-slate-100">
         {catalogos.usuarios.map((u) => (
           <li key={u.id} className="flex items-center justify-between gap-2 py-2">
@@ -227,11 +235,11 @@ export function Configuracion() {
     <div className="space-y-4">
       <EncabezadoPagina sinFiltros titulo="Configuración" descripcion="Catálogos del sistema (solo lectura)" />
       <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
-        La edición de catálogos se habilitará cuando se confirme si se reusan tablas canónicas de la empresa.
+        Sucursales, empresas, temporadas y usuarios vienen de las tablas generales de la empresa: se administran fuera de esta aplicación.
       </p>
       <Pestanas
         opciones={[
-          { valor: 'sitios', etiqueta: 'Sitios' },
+          { valor: 'sitios', etiqueta: 'Sucursales' },
           { valor: 'protocolos', etiqueta: 'Protocolos' },
           { valor: 'categorias', etiqueta: 'Categorías de documentos' },
           { valor: 'analisis', etiqueta: 'Tipos de análisis' },

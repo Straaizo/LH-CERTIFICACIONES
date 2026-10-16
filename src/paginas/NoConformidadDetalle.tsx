@@ -52,7 +52,8 @@ export function NoConformidadDetalle() {
   const { id } = useParams()
   const { datos: nc, cargando, error, recargar, setDatos } = useDatos<NoConformidad>(`/no-conformidades/${id}`)
   const { datos: codigos } = useDatos<Record<string, number>>('/documentos/codigos')
-  const { esCertificaciones, puedeEscribir } = useSesionActiva()
+  const { esCertificaciones, puede } = useSesionActiva()
+  const puedeEscribir = puede('NC_EDITAR')
   const { avisar, nodo } = useAviso()
 
   if (cargando && !nc) return <EsqueletoDetalle />

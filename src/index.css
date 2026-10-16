@@ -247,3 +247,17 @@
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* Ingreso: barra de avance del carrusel. Con transform (no width) avanza en subpíxeles, sin saltos */
+@keyframes progreso {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.barra-progreso {
+  transform-origin: left center;
+  will-change: transform;
+  animation: progreso linear both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .barra-progreso { animation: none; transform: none; }
+}

@@ -1,18 +1,32 @@
 export type Rol = 'certificaciones' | 'encargado' | 'lectura'
 
+/** Permisos de la aplicación en el portal web (usuario_dim_permiso). El rol se deriva de ellos. */
+export type Permiso =
+  | 'CERTIFICACIONES_ADMIN'
+  | 'REGISTROS_EDITAR'
+  | 'NC_EDITAR'
+  | 'LABORATORIO_EDITAR'
+  | 'AMBIENTE_EDITAR'
+  | 'CERTIFICACIONES_VER'
+
+/** Sucursal de general_dim_sucursal. tipo: ámbito de normas y plantillas (packing = planta). */
 export interface UnidadRef {
   id: number
   nombre: string
-  tipo: 'campo' | 'planta'
+  tipo: 'campo' | 'planta' | 'otro'
+  /** Tipo de la tabla general: Campo, Packing, Oficina… */
+  tipo_nombre: string
   empresa_id: number
-  ubicacion?: string
 }
 
 export interface Usuario {
-  id: number
+  /** UUID de general_dim_usuario */
+  id: string
   nombre: string
+  usuario: string
   email: string
   rol: Rol
+  permisos: Permiso[]
   unidades: UnidadRef[]
 }
 
@@ -44,9 +58,9 @@ export interface Catalogos {
     norma: string | null
   }[]
   fuentes_agua: { id: number; nombre: string; unidades: number[] }[]
-  especies: { id: number; nombre: string; unidades: number[] }[]
+  especies: { id: number; nombre: string }[]
   materiales_reciclaje: { id: number; nombre: string }[]
-  usuarios: { id: number; nombre: string; rol: Rol }[]
+  usuarios: { id: string; nombre: string; rol: Rol }[]
 }
 
 export interface Filtros {
@@ -68,7 +82,7 @@ export interface VersionDoc {
   estado: 'pendiente' | 'aprobado' | 'rechazado'
   observacion: string | null
   subido_por: string
-  subido_por_id: number
+  subido_por_id: string
   subido_en: string
   revisado_en: string | null
   certificado: FichaCertificado | null
@@ -126,16 +140,13 @@ export interface Documento {
   id: number
   titulo: string
   codigo: string | null
-  responsable: string | null
   categoria: { id: number; nombre: string }
   empresa_id: number
   seccion: SeccionDoc
-  temporada_id: number | null
   vigente: VersionDoc | null
   ultima: VersionDoc | null
   versiones_total: number
   versiones?: VersionDoc[]
-  requisitos?: { id: number; codigo: string; protocolo: string }[]
 }
 
 /** Documentos fijos: no van por sucursal sino por sección. */
@@ -153,7 +164,6 @@ export interface Vencimiento {
   unidad: string
   empresa_id: number
   empresa: string | null
-  responsable: string | null
   version: string
   emision: string | null
   vence: string
@@ -288,7 +298,7 @@ export interface NoConformidad {
   plan: PlanNc
   unidad: UnidadRef
   area: { id: number; nombre: string } | null
-  responsable: { id: number; nombre: string } | null
+  responsable: { id: string; nombre: string } | null
   reincidente: boolean
   reincidencias: number
   ultima_revision: RevisionNc | null

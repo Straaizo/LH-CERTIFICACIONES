@@ -22,3 +22,6 @@ service-account*.json
 
 # Instrucciones de trabajo locales (no se publican)
 CLAUDE.md
+
+# Originales de las fotos del ingreso (pesados); se suben las versiones de src/assets/carrusel/
+fotos-carrusel/

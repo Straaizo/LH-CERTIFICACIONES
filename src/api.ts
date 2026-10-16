@@ -12,10 +12,73 @@ if (import.meta.env.DEV && !MODO_CELULAR && !/^http:\/\/(localhost|127\.0\.0\.1)
   throw new Error(`VITE_API_URL debe ser localhost en desarrollo (actual: "${API_URL}")`)
 }
 
-export const AUTH_MODO: 'demo' | 'firebase' =
-  import.meta.env.VITE_AUTH_MODO ?? (import.meta.env.DEV || MODO_CELULAR ? 'demo' : 'firebase')
+/** demo: perfiles de ejemplo | jwt: usuario o correo + clave del portal web (como LH Inventario) */
+export const AUTH_MODO: 'demo' | 'jwt' =
+  import.meta.env.VITE_AUTH_MODO ?? (import.meta.env.DEV || MODO_CELULAR ? 'demo' : 'jwt')
 
 let obtenerCabeceraAuth: () => Promise<Record<string, string>> = async () => ({})
+
+// ---------- Sesión con tokens (AUTH_MODO=jwt) ----------
+
+const CLAVE_ACCESS = 'certificaciones.access'
+const CLAVE_REFRESH = 'certificaciones.refresh'
+
+export interface Tokens {
+  access_token: string
+  refresh_token: string
+}
+
+function leer(clave: string): string | null {
+  try {
+    return localStorage.getItem(clave)
+  } catch {
+    return null
+  }
+}
+
+export function guardarTokens(tokens: Tokens | null) {
+  try {
+    if (tokens) {
+      localStorage.setItem(CLAVE_ACCESS, tokens.access_token)
+      localStorage.setItem(CLAVE_REFRESH, tokens.refresh_token)
+    } else {
+      localStorage.removeItem(CLAVE_ACCESS)
+      localStorage.removeItem(CLAVE_REFRESH)
+    }
+  } catch {
+    /* almacenamiento no disponible */
+  }
+}
+
+export function tokenAcceso(): string | null {
+  return leer(CLAVE_ACCESS)
+}
+
+let refrescando: Promise<boolean> | null = null
+
+/** Renueva el par de tokens con el refresh; una sola petición aunque fallen varias a la vez. */
+function refrescarTokens(): Promise<boolean> {
+  const refresh = leer(CLAVE_REFRESH)
+  if (!refresh) return Promise.resolve(false)
+  refrescando ??= fetch(armarUrl('/auth/refresh'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refresh }),
+  })
+    .then(async (r) => {
+      if (!r.ok) {
+        guardarTokens(null)
+        return false
+      }
+      guardarTokens((await r.json()) as Tokens)
+      return true
+    })
+    .catch(() => false)
+    .finally(() => {
+      refrescando = null
+    })
+  return refrescando
+}
 
 // Demo publicada: clave de acceso que pide la API (se guarda en este navegador)
 const CLAVE_ACCESO = 'certificaciones.claveDemo'
@@ -65,7 +128,7 @@ function armarUrl(ruta: string, params?: Params): string {
   return url.toString()
 }
 
-async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown, params?: Params): Promise<T> {
+async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown, params?: Params, reintento = true): Promise<T> {
   const esForm = cuerpo instanceof FormData
   let respuesta: Response
   try {
@@ -80,6 +143,10 @@ async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown, params?:
     })
   } catch {
     throw new ErrorApi(0, 'No se pudo conectar con la API. ¿Está corriendo?')
+  }
+  // Token vencido: se renueva una vez y se repite la petición
+  if (respuesta.status === 401 && AUTH_MODO === 'jwt' && reintento && !ruta.startsWith('/auth/')) {
+    if (await refrescarTokens()) return pedir<T>(metodo, ruta, cuerpo, params, false)
   }
   if (!respuesta.ok) {
     let mensaje = `Error ${respuesta.status}`

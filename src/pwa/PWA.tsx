@@ -235,7 +235,7 @@ export function AvisoInstalar() {
       <div className="flex items-start gap-4">
         <IconoApp />
         <div className="min-w-0 flex-1">
-          <h2 id="titulo-instalar" className="text-[17px] font-bold tracking-tight text-slate-900">Instala Certificaciones</h2>
+          <h2 id="titulo-instalar" className="text-[17px] font-bold tracking-tight text-slate-900">Instala Portal Certificaciones</h2>
           <p className="mt-0.5 text-sm text-slate-600">Úsala como una aplicación más de tu celular o computador.</p>
         </div>
         <button type="button" onClick={() => cerrar(true)} aria-label="Cerrar" className="-mr-2 -mt-2 rounded-xl p-2 text-slate-500 hover:bg-slate-100">

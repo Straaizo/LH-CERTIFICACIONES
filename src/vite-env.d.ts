@@ -2,8 +2,6 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string
-  readonly VITE_AUTH_MODO?: 'demo' | 'firebase'
-  readonly VITE_FIREBASE_API_KEY?: string
-  readonly VITE_FIREBASE_AUTH_DOMAIN?: string
-  readonly VITE_FIREBASE_PROJECT_ID?: string
+  /** demo: perfiles de ejemplo | jwt: usuario o correo + clave del portal web */
+  readonly VITE_AUTH_MODO?: 'demo' | 'jwt'
 }

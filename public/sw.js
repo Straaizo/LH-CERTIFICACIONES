@@ -1,9 +1,9 @@
-/* Service worker de Certificaciones.
+/* Service worker de Portal Certificaciones.
  * - Pantallas: primero la red; sin señal, la última versión guardada (la app abre igual en terreno).
  * - Archivos de la app (/assets, íconos): desde la caché; sus nombres cambian en cada versión.
  * - Nunca guarda datos: la API, el inicio de sesión y los archivos firmados van siempre a la red.
  */
-const CACHE = 'certificaciones-app-v1'
+const CACHE = 'portal-certificaciones-v2'
 const BASICOS = ['/', '/manifest.webmanifest', '/logo_lh.png', '/icons/icon-192.png', '/icons/icon-512.png']
 const MAXIMO = 80
 

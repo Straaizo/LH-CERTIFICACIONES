@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "fotos": "node scripts/fotos-carrusel.mjs",
+    "predev": "node scripts/fotos-carrusel.mjs",
+    "prebuild": "node scripts/fotos-carrusel.mjs",
     "dev": "vite",
     "dev:celular": "vite --host --mode celular",
     "celular:app": "tsc -b && vite build --mode celular --outDir dist-celular --emptyOutDir && vite preview --outDir dist-celular",
@@ -11,7 +14,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "firebase": "^12.19.0",
     "lucide-react": "^1.52.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -22,6 +24,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "sharp": "^0.34.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^8.3.2"
