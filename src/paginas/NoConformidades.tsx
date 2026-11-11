@@ -35,7 +35,7 @@ function normalizar(texto: string): string {
 
 export function NoConformidades() {
   const [parametros] = useSearchParams()
-  const ncAntigua = Number(parametros.get('nc')) || null
+  const ncAntigua = parametros.get('nc') || null
   if (ncAntigua) return <Navigate to={`/no-conformidades/${ncAntigua}`} replace />
   return <ListaNoConformidades />
 }
@@ -47,7 +47,7 @@ function ListaNoConformidades() {
   const [busqueda, setBusqueda] = useState('')
   const [soloReincidentes, setSoloReincidentes] = useState(false)
   const { datos, cargando, error, recargar } = useDatos<NoConformidad[]>('/no-conformidades', { ...filtros })
-  const { datos: codigos } = useDatos<Record<string, number>>('/documentos/codigos')
+  const { datos: codigos } = useDatos<Record<string, string>>('/documentos/codigos')
 
   const base = useMemo(() => {
     const texto = normalizar(busqueda.trim())
@@ -177,7 +177,7 @@ function ListaNoConformidades() {
 
 function FilaNc({ nc, codigos, esCertificaciones }: {
   nc: NoConformidad
-  codigos: Record<string, number>
+  codigos: Record<string, string>
   esCertificaciones: boolean
 }) {
   const plan = estadoPlan(nc)

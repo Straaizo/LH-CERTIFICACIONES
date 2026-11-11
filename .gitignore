@@ -25,3 +25,13 @@ CLAUDE.md
 
 # Originales de las fotos del ingreso (pesados); se suben las versiones de src/assets/carrusel/
 fotos-carrusel/
+*.p12
+*.pfx
+secrets/
+credentials/
+gcp-credentials*.json
+*-sa.json
+*.xlsm
+*.db
+*.sqlite
+*.log

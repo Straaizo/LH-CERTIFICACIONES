@@ -277,13 +277,13 @@ function ProgramaAnual() {
 function ModalPlanificar({ onCerrar, onCreada }: { onCerrar: () => void; onCreada: () => void }) {
   const { catalogos, filtros } = useSesionActiva()
   const [titulo, setTitulo] = useState('')
-  const [protocoloId, setProtocoloId] = useState<number | ''>(filtros.protocolo_id ?? '')
-  const [versionId, setVersionId] = useState<number | ''>('')
+  const [protocoloId, setProtocoloId] = useState<string | ''>(filtros.protocolo_id ?? '')
+  const [versionId, setVersionId] = useState<string | ''>('')
   const [unidadId, setUnidadId] = useState<number | ''>(filtros.unidad_id ?? '')
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
   const [auditor, setAuditor] = useState('')
-  const [viendoVersion, setViendoVersion] = useState<number | null>(null)
+  const [viendoVersion, setViendoVersion] = useState<string | null>(null)
   const { ocupado, error, ejecutar } = useAccion()
 
   const protocolo = catalogos.protocolos.find((p) => p.id === protocoloId)
@@ -319,7 +319,7 @@ function ModalPlanificar({ onCerrar, onCreada }: { onCerrar: () => void; onCread
         <Campo etiqueta="Título (opcional)" ayuda="Si lo dejas vacío se usa un título automático.">
           <input
             className={claseEntrada}
-            maxLength={250}
+            maxLength={120}
             placeholder={tituloSugerido}
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
@@ -354,7 +354,7 @@ function ModalPlanificar({ onCerrar, onCreada }: { onCerrar: () => void; onCread
             className={claseEntrada}
             value={protocoloId}
             onChange={(e) => {
-              setProtocoloId(e.target.value ? Number(e.target.value) : '')
+              setProtocoloId(e.target.value)
               setVersionId('')
             }}
           >
@@ -372,7 +372,7 @@ function ModalPlanificar({ onCerrar, onCreada }: { onCerrar: () => void; onCread
             className={claseEntrada}
             value={versionId}
             disabled={!protocolo}
-            onChange={(e) => setVersionId(e.target.value ? Number(e.target.value) : '')}
+            onChange={(e) => setVersionId(e.target.value)}
           >
             <option value="">Selecciona…</option>
             {protocolo?.versiones.map((v) => (
@@ -386,7 +386,7 @@ function ModalPlanificar({ onCerrar, onCreada }: { onCerrar: () => void; onCread
           </Selector>
         </Campo>
         {versionId !== '' && (
-          <button type="button" onClick={() => setViendoVersion(Number(versionId))}
+          <button type="button" onClick={() => setViendoVersion(versionId)}
             className="-mt-1 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
             <Eye className="h-4 w-4" /> Ver los puntos de esta versión
           </button>

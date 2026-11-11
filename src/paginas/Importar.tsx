@@ -51,8 +51,9 @@ interface HojaVistaPrevia {
   unidad: { id: number; nombre: string } | null
   temporada: string | null
   ya_importada: boolean
+  auditoria_existente_id?: string | null
   errores: string[]
-  auditoria_id?: number
+  auditoria_id?: string
 }
 
 interface ResultadoBrcgs {
@@ -77,7 +78,7 @@ interface ResultadoChecklist {
   comparacion: { version: string; agregados: string[]; quitados: string[]; cambiados: string[] } | null
   confirmado: boolean
   nuevos: number
-  version_id?: number
+  version_id?: string
 }
 
 function formulario(archivo: File, confirmar: boolean, unidadId?: number | '') {
@@ -244,6 +245,11 @@ function VistaHoja({ hoja }: { hoja: HojaVistaPrevia }) {
           <Link to={`/auditorias/${hoja.auditoria_id}`} className="text-sm font-medium text-emerald-700 underline">
             Ver auditoría creada
           </Link>
+        ) : hoja.ya_importada && hoja.auditoria_existente_id ? (
+          <span className="flex items-center gap-2">
+            <Insignia tono="amarillo">Ya importada</Insignia>
+            <Link to={`/auditorias/${hoja.auditoria_existente_id}`} className="text-sm font-medium text-emerald-700 underline">Ver auditoría</Link>
+          </span>
         ) : hoja.errores.length ? (
           <Insignia tono="rojo">No se importará</Insignia>
         ) : (
@@ -528,7 +534,7 @@ function ImportarChecklist() {
 /** Versiones de cada norma: la vigente y las anteriores (nunca se borran ni se sobrescriben). */
 function VersionesCargadas() {
   const { catalogos } = useSesionActiva()
-  const [verVersion, setVerVersion] = useState<number | null>(null)
+  const [verVersion, setVerVersion] = useState<string | null>(null)
   const [actualizar, setActualizar] = useState<{ codigo: string; nombre: string } | null>(null)
   const cargados = catalogos.protocolos.filter((p) => p.versiones.length > 0)
 
@@ -536,7 +542,7 @@ function VersionesCargadas() {
     <Tarjeta titulo="Versiones cargadas">
       <p className="mb-4 text-sm text-slate-600">
         Cada norma conserva todas sus versiones. La <strong>vigente</strong> es la que se propone al planificar una auditoría,
-        pero Loreto puede elegir cualquiera. Toca una versión para ver sus puntos.
+        pero el equipo de certificaciones puede elegir cualquiera. Toca una versión para ver sus puntos.
       </p>
       {!cargados.length ? (
         <Vacio>Todavía no hay checklist cargados.</Vacio>

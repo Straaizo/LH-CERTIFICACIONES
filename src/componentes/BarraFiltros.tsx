@@ -5,18 +5,21 @@ import { Desplegable } from './Desplegable'
 const numero = (v: string) => (v ? Number(v) : undefined)
 const icono = 'h-4 w-4'
 
-/** Encabezado: empresa y sucursal. La sucursal se elige primero; el resto de la app depende de ella. */
-export function SelectoresSucursal({ soloSucursal = false }: { soloSucursal?: boolean }) {
+/** Encabezado: empresa y sucursal. La sucursal se elige primero; el resto de la app depende de ella.
+ *  `enLista`: filas a todo el ancho, para la hoja "Más" del celular. */
+export function SelectoresSucursal({ soloSucursal = false, enLista = false }: { soloSucursal?: boolean; enLista?: boolean }) {
   const { catalogos, filtros, setFiltros } = useSesionActiva()
   const empresas = catalogos.empresas.filter((e) => catalogos.unidades.some((u) => u.empresa_id === e.id))
   const unidades = catalogos.unidades.filter((u) => !filtros.empresa_id || u.empresa_id === filtros.empresa_id)
   const codigoEmpresa = (id: number) => catalogos.empresas.find((e) => e.id === id)?.codigo ?? ''
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-2">
+    <div className={enLista ? 'flex flex-col gap-2' : 'flex min-w-0 flex-wrap items-center gap-2'}>
       {!soloSucursal && empresas.length > 1 && (
         <Desplegable
-          className="max-w-[11rem]"
+          tono={enLista ? 'fila' : 'oscuro'}
+          icono={enLista ? <Building2 className="h-[18px] w-[18px] text-emerald-700" /> : undefined}
+          className={enLista ? '' : 'max-w-[11rem]'}
           titulo="Cambiar empresa"
           etiqueta="Empresa"
           valor={String(filtros.empresa_id ?? '')}
@@ -29,16 +32,18 @@ export function SelectoresSucursal({ soloSucursal = false }: { soloSucursal?: bo
         />
       )}
       <Desplegable
-        className="max-w-[16rem]"
+        tono={enLista ? 'fila' : 'oscuro'}
+        icono={enLista ? <MapPin className="h-[18px] w-[18px] text-emerald-700" /> : undefined}
+        className={enLista ? '' : 'max-w-[16rem]'}
         titulo="Cambiar sucursal"
         etiqueta="Sucursal"
-        punto
+        punto={!enLista}
         valor={String(filtros.unidad_id ?? '')}
         todas={{ valor: '', etiqueta: 'Todas las sucursales', icono: <Globe2 className={icono} /> }}
         opciones={unidades.map((u) => ({
           valor: String(u.id),
           etiqueta: u.nombre,
-          detalle: `${u.tipo === 'planta' ? 'Planta' : 'Campo'} · ${codigoEmpresa(u.empresa_id)}`,
+          detalle: `${u.tipo_nombre} · ${codigoEmpresa(u.empresa_id)}`,
           icono: u.tipo === 'planta' ? <Factory className={icono} /> : <MapPin className={icono} />,
         }))}
         textoBoton={catalogos.unidades.find((u) => u.id === filtros.unidad_id)?.nombre ?? 'Todas'}

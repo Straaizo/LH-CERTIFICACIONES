@@ -95,7 +95,7 @@ export function Vencimientos() {
         acciones={esCertificaciones && (
           <Link
             to="/registros"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-[15px] font-semibold text-white hover:bg-emerald-800"
           >
             <FolderOpen className="h-4 w-4" /> Ir a documentos fijos
           </Link>

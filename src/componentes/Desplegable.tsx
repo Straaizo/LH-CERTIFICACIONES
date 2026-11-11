@@ -5,6 +5,7 @@ import {
 import { createPortal } from 'react-dom'
 import { Check, ChevronDown } from 'lucide-react'
 import { ContextoCampo } from './ui'
+import { Hoja, useEsMovil } from './Hoja'
 
 export interface OpcionDesplegable {
   valor: string
@@ -29,7 +30,7 @@ function useDesplegable(lista: OpcionDesplegable[], valor: string, onElegir: (o:
     if (!abierto) return
     const fuera = (e: MouseEvent) => {
       const t = e.target as Node
-      if (raiz.current?.contains(t) || panel.current?.parentElement?.contains(t)) return
+      if (raiz.current?.contains(t) || panel.current?.closest('[data-panel]')?.contains(t)) return
       setAbierto(false)
     }
     document.addEventListener('mousedown', fuera)
@@ -80,10 +81,24 @@ function useDesplegable(lista: OpcionDesplegable[], valor: string, onElegir: (o:
   const tecladoBoton = (e: KeyboardEvent) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); abrir() }
   }
-  return { abierto, setAbierto, abrir, activo, setActivo, raiz, boton, panel, elegir, teclado, tecladoBoton }
+  return { abierto, setAbierto, abrir, cerrar, activo, setActivo, raiz, boton, panel, elegir, teclado, tecladoBoton }
 }
 
-function Panel({ id, titulo, lista, valor, activo, setActivo, elegir, teclado, panel, ancla, alinear, ancho, vacio }: {
+/** En el celular, hoja inferior con filas grandes; en escritorio, panel flotante junto al botón. */
+function Panel(props: PropsPanel & { abierto: boolean; cerrar: () => void }) {
+  const movil = useEsMovil()
+  const { abierto, cerrar, ...resto } = props
+  if (movil) {
+    return (
+      <Hoja abierta={abierto} onCerrar={cerrar} titulo={props.titulo}>
+        <ListaOpciones {...resto} grande />
+      </Hoja>
+    )
+  }
+  return abierto ? <PanelFlotante {...resto} /> : null
+}
+
+interface PropsPanel {
   id: string
   titulo: string
   lista: OpcionDesplegable[]
@@ -98,7 +113,9 @@ function Panel({ id, titulo, lista, valor, activo, setActivo, elegir, teclado, p
   alinear: 'izquierda' | 'derecha'
   ancho: string
   vacio: string
-}) {
+}
+
+function PanelFlotante({ titulo, ancla, alinear, ancho, ...lista }: PropsPanel) {
   // En un portal con posición fija: ningún contenedor con scroll (como un modal) lo recorta.
   // Se abre hacia abajo o, si no cabe, hacia arriba, y nunca se sale de la pantalla.
   const caja = useRef<HTMLDivElement>(null)
@@ -135,6 +152,7 @@ function Panel({ id, titulo, lista, valor, activo, setActivo, elegir, teclado, p
   return createPortal(
     <div
       ref={caja}
+      data-panel
       style={{
         position: 'fixed',
         top: pos?.top ?? 0,
@@ -145,6 +163,15 @@ function Panel({ id, titulo, lista, valor, activo, setActivo, elegir, teclado, p
       className={`z-[60] ${ancho} overflow-hidden rounded-2xl border border-slate-200 bg-superficie text-left text-slate-800 shadow-[0_12px_40px_-8px_rgba(16,40,16,0.28)]`}
     >
       <p className="px-4 pb-2 pt-3.5 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">{titulo}</p>
+      <ListaOpciones {...lista} titulo={titulo} alto={pos ? Math.min(352, pos.alto - 44) : undefined} />
+    </div>,
+    document.body,
+  )
+}
+
+function ListaOpciones({ id, titulo, lista, valor, activo, setActivo, elegir, teclado, panel, vacio, alto, grande = false }:
+  Omit<PropsPanel, 'ancla' | 'alinear' | 'ancho'> & { alto?: number; grande?: boolean }) {
+  return (
       <ul
         ref={panel}
         id={id}
@@ -153,8 +180,8 @@ function Panel({ id, titulo, lista, valor, activo, setActivo, elegir, teclado, p
         aria-label={titulo}
         aria-activedescendant={lista.length ? `${id}-${activo}` : undefined}
         onKeyDown={teclado}
-        style={pos ? { maxHeight: Math.min(352, pos.alto - 44) } : undefined}
-        className="max-h-[min(60vh,22rem)] overflow-y-auto overscroll-contain px-2 pb-2 outline-none"
+        style={alto ? { maxHeight: alto } : undefined}
+        className={grande ? 'pb-1 outline-none' : 'max-h-[min(60vh,22rem)] overflow-y-auto overscroll-contain px-2 pb-2 outline-none'}
       >
         {lista.length === 0 && <li className="px-3 py-4 text-sm text-slate-500">{vacio}</li>}
         {lista.map((o, i) => {
@@ -172,12 +199,12 @@ function Panel({ id, titulo, lista, valor, activo, setActivo, elegir, teclado, p
                 role="option"
                 aria-selected={elegida}
                 aria-disabled={o.deshabilitada || undefined}
-                onMouseEnter={() => !o.deshabilitada && setActivo(i)}
+                onMouseEnter={() => !grande && !o.deshabilitada && setActivo(i)}
                 onClick={() => elegir(o)}
-                className={`flex min-h-11 items-center gap-3 rounded-xl px-2.5 py-2 ${
+                className={`flex items-center gap-3 rounded-xl px-2.5 transition-colors ${grande ? 'min-h-[56px] py-2.5 active:bg-slate-100' : 'min-h-11 py-2'} ${
                   o.deshabilitada
                     ? 'cursor-not-allowed text-slate-400'
-                    : `cursor-pointer ${elegida ? 'bg-emerald-50' : i === activo ? 'bg-slate-100' : ''}`
+                    : `cursor-pointer ${elegida ? 'bg-emerald-50' : i === activo && !grande ? 'bg-slate-100' : ''}`
                 }`}
               >
                 {o.icono && (
@@ -190,27 +217,28 @@ function Panel({ id, titulo, lista, valor, activo, setActivo, elegir, teclado, p
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className={`block text-[15px] leading-snug ${elegida ? 'font-semibold text-slate-900' : ''}`}>{o.etiqueta}</span>
+                  <span className={`block leading-snug ${grande ? 'text-base' : 'text-[15px]'} ${elegida ? 'font-semibold text-slate-900' : ''}`}>{o.etiqueta}</span>
                   {o.detalle && <span className="block truncate text-xs text-slate-500">{o.detalle}</span>}
                 </span>
-                {elegida && <Check className="h-4 w-4 shrink-0 text-emerald-700" />}
+                {elegida && <Check className={`shrink-0 text-emerald-700 ${grande ? 'h-5 w-5' : 'h-4 w-4'}`} />}
               </div>
               {todas && <div className="mx-2.5 my-1.5 h-px bg-slate-200" />}
             </li>
           )
         })}
       </ul>
-    </div>,
-    document.body,
   )
 }
 
 // ---------- Píldora (encabezado y filtros de contexto) ----------
 
 const DISPARADOR = {
-  oscuro: 'rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-white hover:bg-white/15',
-  ambar: 'rounded-full border border-amber-300/60 bg-amber-300/15 px-3.5 py-1.5 text-amber-50 hover:bg-amber-300/25',
-  claro: 'h-10 rounded-xl border border-slate-200 bg-white px-3 text-slate-800 shadow-sm hover:border-slate-300',
+  // En el celular, 44 px de alto (mínimo cómodo para el dedo)
+  oscuro: 'min-h-11 rounded-full border border-white/25 bg-white/10 px-4 text-white hover:bg-white/15 active:bg-white/20 lg:min-h-0 lg:px-3.5 lg:py-1.5',
+  ambar: 'min-h-11 rounded-full border border-amber-300/60 bg-amber-300/15 px-4 text-amber-50 hover:bg-amber-300/25 lg:min-h-0 lg:px-3.5 lg:py-1.5',
+  claro: 'h-11 rounded-lg border border-slate-200 bg-white px-3 text-slate-800 hover:border-slate-300 active:bg-slate-50 lg:h-10',
+  // Fila de ajustes a todo el ancho (hoja "Más" del celular): etiqueta a la izquierda, valor a la derecha
+  fila: 'min-h-[54px] rounded-2xl border border-slate-200/80 bg-white px-4 text-[15px] text-slate-800 active:bg-slate-50',
 }
 
 export function Desplegable({
@@ -236,7 +264,8 @@ export function Desplegable({
   const d = useDesplegable(lista, valor, (o) => o.valor !== valor && onCambio(o.valor))
   const id = useId()
   const elegida = lista.find((o) => o.valor === valor)
-  const tenue = tono === 'claro' ? 'text-slate-500' : tono === 'ambar' ? 'text-amber-100/80' : 'text-white/75'
+  const tenue = tono === 'claro' || tono === 'fila' ? 'text-slate-500' : tono === 'ambar' ? 'text-amber-100/80' : 'text-white/75'
+  const fila = tono === 'fila'
 
   return (
     <div ref={d.raiz} className={`relative min-w-0 ${className}`}>
@@ -251,19 +280,17 @@ export function Desplegable({
         title={textoBoton ?? elegida?.etiqueta}
         onClick={() => (d.abierto ? d.setAbierto(false) : d.abrir())}
         onKeyDown={d.tecladoBoton}
-        className={`inline-flex max-w-full items-center gap-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-60 ${DISPARADOR[tono]}`}
+        className={`${fila ? 'flex w-full gap-3' : 'inline-flex max-w-full gap-2 text-sm'} items-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-60 ${DISPARADOR[tono]}`}
       >
         {punto && <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-300" />}
         {icono}
-        {etiqueta && <span className={`shrink-0 ${tenue}`}>{etiqueta}</span>}
-        <span className="truncate font-semibold">{textoBoton ?? elegida?.etiqueta ?? '—'}</span>
+        {etiqueta && <span className={`shrink-0 ${fila ? 'font-medium text-slate-800' : tenue}`}>{etiqueta}</span>}
+        <span className={`truncate font-semibold ${fila ? 'ml-auto text-slate-600' : ''}`}>{textoBoton ?? elegida?.etiqueta ?? '—'}</span>
         <ChevronDown className={`h-4 w-4 shrink-0 opacity-70 transition-transform ${d.abierto ? 'rotate-180' : ''}`} />
       </button>
-      {d.abierto && (
-        <Panel id={id} titulo={titulo} lista={lista} valor={valor} activo={d.activo} setActivo={d.setActivo}
-          elegir={d.elegir} teclado={d.teclado} panel={d.panel} ancla={d.raiz} alinear={alinear} vacio={vacio}
-          ancho="w-80 max-w-[calc(100vw-2rem)]" />
-      )}
+      <Panel abierto={d.abierto} cerrar={() => d.cerrar(false)} id={id} titulo={titulo} lista={lista} valor={valor}
+        activo={d.activo} setActivo={d.setActivo} elegir={d.elegir} teclado={d.teclado} panel={d.panel} ancla={d.raiz}
+        alinear={alinear} vacio={vacio} ancho="w-80 max-w-[calc(100vw-2rem)]" />
     </div>
   )
 }
@@ -363,11 +390,10 @@ export function Selector({
           className="pointer-events-none absolute bottom-0 left-4 h-px w-px opacity-0"
         />
       )}
-      {d.abierto && (
-        <Panel id={id} titulo={titulo ?? resto['aria-label'] ?? etiquetaCampo ?? 'Elige una opción'} lista={lista} valor={valor}
-          activo={d.activo} setActivo={d.setActivo} elegir={d.elegir} teclado={d.teclado} panel={d.panel} ancla={d.raiz}
-          alinear="izquierda" vacio="Sin opciones" ancho="w-max max-w-[min(26rem,calc(100vw-2rem))]" />
-      )}
+      <Panel abierto={d.abierto} cerrar={() => d.cerrar(false)} id={id}
+        titulo={titulo ?? resto['aria-label'] ?? etiquetaCampo ?? 'Elige una opción'} lista={lista} valor={valor}
+        activo={d.activo} setActivo={d.setActivo} elegir={d.elegir} teclado={d.teclado} panel={d.panel} ancla={d.raiz}
+        alinear="izquierda" vacio="Sin opciones" ancho="w-max max-w-[min(26rem,calc(100vw-2rem))]" />
     </div>
   )
 }

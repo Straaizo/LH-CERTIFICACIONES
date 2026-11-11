@@ -155,7 +155,7 @@ export function EsqueletoCarga({ variante = 'lista', texto = 'Cargando…' }: { 
 /** Primera carga de la aplicación: la misma estructura (menú, encabezado y contenido) mientras inicia la sesión. */
 export function EsqueletoApp() {
   return (
-    <div role="status" aria-busy="true" className="flex h-dvh overflow-hidden bg-fondo">
+    <div role="status" aria-busy="true" className="flex h-dvh overflow-hidden bg-fondo [@media(display-mode:standalone)]:h-full">
       <span className="sr-only">Iniciando la aplicación…</span>
       <aside className="hidden w-72 shrink-0 flex-col bg-gradient-to-b from-emerald-700 to-emerald-900 p-5 lg:flex">
         <div className="flex items-center gap-3">

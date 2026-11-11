@@ -1,5 +1,14 @@
 {
   "projects": {
-    "default": "ID-DEL-PROYECTO-GCP"
+    "default": "certificaciones-ea86d"
+  },
+  "targets": {
+    "certificaciones-ea86d": {
+      "hosting": {
+        "certificaciones": [
+          "certificaciones-ea86d"
+        ]
+      }
+    }
   }
 }

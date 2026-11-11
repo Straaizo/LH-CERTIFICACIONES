@@ -5,7 +5,7 @@ import { useAccion, useDatos } from '../hooks'
 import { fecha, hoyIso, num } from '../formato'
 import type { UnidadRef } from '../tipos'
 import { useSesionActiva } from '../contexto/Sesion'
-import { VentanaComparativa } from './AmbienteComparativa'
+import { BotonInformePdf, VentanaComparativa } from './AmbienteComparativa'
 import {
   Boton, Campo, Cargando, EncabezadoPagina, MensajeError, Pestanas, Tarjeta, Vacio, claseEntrada, useAviso,
 } from '../componentes/ui'
@@ -21,7 +21,7 @@ interface Huella {
 }
 
 interface Consumo {
-  id: number
+  id: string
   fecha: string
   concepto: string
   concepto_nombre: string
@@ -37,7 +37,7 @@ interface Concepto {
 }
 
 interface Factor {
-  id: number
+  id: string
   temporada_id: number
   concepto: string
   unidad_medida: string
@@ -46,7 +46,7 @@ interface Factor {
 }
 
 interface RegistroReciclaje {
-  id: number
+  id: string
   fecha: string
   material: string
   kilos: number
@@ -90,7 +90,8 @@ export function Ambiente() {
   if (usuario.rol === 'encargado') {
     return (
       <div>
-        <EncabezadoPagina titulo="Medio ambiente" descripcion="Registra el consumo de combustible de tu campo: diésel, bencina y gas." />
+        <EncabezadoPagina titulo="Medio ambiente" descripcion="Registra el consumo de combustible de tu campo: diésel, bencina y gas."
+          acciones={<BotonInformePdf />} />
         <HuellaCarbono soloCombustible />
       </div>
     )
@@ -101,9 +102,12 @@ export function Ambiente() {
         titulo="Medio ambiente"
         descripcion="Estos datos también sirven de evidencia para GLOBALG.A.P. (energía, GEI y residuos)."
         acciones={
-          <Boton icono={<BarChart3 className="h-4 w-4" />} onClick={() => setComparativa(true)}>
-            Comparar temporadas
-          </Boton>
+          <>
+            <Boton icono={<BarChart3 className="h-4 w-4" />} onClick={() => setComparativa(true)}>
+              Comparar temporadas
+            </Boton>
+            <BotonInformePdf />
+          </>
         }
       />
       <Pestanas
@@ -305,7 +309,7 @@ function Reciclaje() {
   const accion = useAccion()
   const [unidadId, setUnidadId] = useState<number | undefined>(unidadInicial(catalogos.unidades, filtros.unidad_id))
   const [fechaRegistro, setFechaRegistro] = useState(hoyIso())
-  const [materialId, setMaterialId] = useState<number | undefined>()
+  const [materialId, setMaterialId] = useState<string | undefined>()
   const [kilos, setKilos] = useState('')
 
   const totales = useMemo(() => {
@@ -375,7 +379,7 @@ function Reciclaje() {
               <input type="date" className={claseEntrada} required value={fechaRegistro} onChange={(e) => setFechaRegistro(e.target.value)} />
             </Campo>
             <Campo etiqueta="Material">
-              <Selector className={claseEntrada} required value={materialId ?? ''} onChange={(e) => setMaterialId(Number(e.target.value) || undefined)}>
+              <Selector className={claseEntrada} required value={materialId ?? ''} onChange={(e) => setMaterialId(e.target.value || undefined)}>
                 <option value="" disabled>Elige un material</option>
                 {catalogos.materiales_reciclaje.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}
               </Selector>

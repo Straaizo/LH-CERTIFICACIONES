@@ -1,47 +1,82 @@
 @import "tailwindcss";
 
 /*
-  Base visual compartida con el Portal Interno La Hornilla.
-  Se redefinen las paletas que usa toda la app: emerald = verde de marca, slate = neutros con tinte verde.
+  Línea visual La Hornilla (lh_ui, github.com/mbravot/lh_ui): misma paleta, tipografía y radios que las apps móviles.
+  Se redefinen las paletas que usa toda la app:
+  - emerald = verde de marca (700 = primary #2F7553, relleno con blanco encima; 800 = primaryDark, verde como texto)
+  - slate = grises con tinte verde (100 = fondo, 200 = bordes, 500 = texto secundario 5,2:1 sobre blanco)
+  - red / amber / sky = error / aviso / info. El naranja (amber-500) es solo para íconos y fondos; como texto, amber-700+.
 */
 @theme {
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  /* lh_ui no usa monoespaciada: etiquetas y códigos también van en DM Sans */
+  --font-mono: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 
-  --color-emerald-50: #eef8ec;
-  --color-emerald-100: #d8efd3;
-  --color-emerald-200: #b0dfa8;
-  --color-emerald-300: #82cb77;
-  --color-emerald-400: #52b146;
-  --color-emerald-500: #2b9a20;
-  --color-emerald-600: #138a10;
-  --color-emerald-700: #0b7a0b;
-  --color-emerald-800: #09650c;
-  --color-emerald-900: #0a520e;
-  --color-emerald-950: #052e07;
+  --color-emerald-50: #eaf4ee;
+  --color-emerald-100: #d3e9dc;
+  --color-emerald-200: #a9d5bb;
+  --color-emerald-300: #74c69d;
+  --color-emerald-400: #4ca77a;
+  --color-emerald-500: #3a8762;
+  --color-emerald-600: #33805b;
+  --color-emerald-700: #2f7553;
+  --color-emerald-800: #2d6a4f;
+  --color-emerald-900: #245c43;
+  --color-emerald-950: #173a2a;
 
-  --color-slate-50: #f4f7f2;
-  --color-slate-100: #e9eee6;
-  --color-slate-200: #dae1d5;
-  --color-slate-300: #c4cdbe;
-  --color-slate-400: #838d7e;
-  --color-slate-500: #5a6455;
-  --color-slate-600: #50594c;
-  --color-slate-700: #3b4338;
-  --color-slate-800: #262d24;
-  --color-slate-900: #172016;
-  --color-slate-950: #0c110b;
+  --color-slate-50: #f5f8f6;
+  --color-slate-100: #edf2ee;
+  --color-slate-200: #cdd8d1;
+  --color-slate-300: #b3c3b8;
+  --color-slate-400: #8fa898;
+  --color-slate-500: #5a7262;
+  --color-slate-600: #4b6153;
+  --color-slate-700: #3a4f41;
+  --color-slate-800: #2d4030;
+  --color-slate-900: #1e2e22;
+  --color-slate-950: #0f1e13;
 
-  --color-fondo: #eef2eb;
-  --color-superficie: #f9fbf7;
-  --color-marca: #0b7a0b;
-  --color-marca-oscura: #075f0b;
+  --color-red-50: #fceaea;
+  --color-red-100: #f8d5d4;
+  --color-red-200: #efb4b3;
+  --color-red-300: #e38d8c;
+  --color-red-400: #ee7b7a;
+  --color-red-500: #cc4241;
+  --color-red-600: #b3302f;
+  --color-red-700: #a02a29;
+  --color-red-800: #82211f;
+  --color-red-900: #5f1716;
+
+  --color-amber-50: #faf0da;
+  --color-amber-100: #f6e3b9;
+  --color-amber-200: #edd08f;
+  --color-amber-300: #f2b46a;
+  --color-amber-400: #f0a04a;
+  --color-amber-500: #e88c2a;
+  --color-amber-600: #b8691a;
+  --color-amber-700: #8f4f08;
+  --color-amber-800: #7a4307;
+  --color-amber-900: #5e3405;
+
+  --color-sky-50: #e3f0fa;
+  --color-sky-100: #c9e1f4;
+  --color-sky-200: #a5cdeb;
+  --color-sky-300: #5da9dd;
+  --color-sky-600: #1f6a9c;
+  --color-sky-700: #1b5d89;
+  --color-sky-800: #174e73;
+  --color-sky-900: #123d5a;
+
+  --color-fondo: #edf2ee;
+  --color-superficie: #ffffff;
+  --color-marca: #2f7553;
+  --color-marca-oscura: #2d6a4f;
 }
 
 @layer base {
   body {
     @apply bg-fondo font-sans text-slate-800 antialiased;
-    font-feature-settings: "ss01", "tnum";
+    font-feature-settings: "tnum";
   }
 }
 
@@ -155,7 +190,7 @@
 .hueso {
   position: relative;
   overflow: hidden;
-  background-color: rgb(218 225 213 / 0.7);
+  background-color: rgb(205 216 209 / 0.7);
 }
 .hueso::after {
   content: "";
@@ -186,6 +221,15 @@
    convierte al contenedor en referencia de los elementos fijos y los modales quedarían mal ubicados. */
 .animar-pagina {
   animation: aparecer 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+/* Android: el desenfoque de fondo (backdrop-filter) sobre contenido que se mueve es lo más caro para su GPU.
+   Ahí se reemplaza por un tono equivalente; en iPhone y computador se mantiene. La clase la pone main.tsx. */
+.gpu-modesta [class*="backdrop-blur"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.gpu-modesta .velo-hoja {
+  background-color: rgb(2 6 23 / 0.52);
 }
 @media (prefers-reduced-motion: reduce) {
   .hueso::after { animation: none; display: none; }
@@ -242,6 +286,19 @@
 .modo-app body {
   overscroll-behavior: none;
 }
+/* App instalada en iPhone (iOS 26, WebKit bug 301108): con viewport-fit=cover y la barra de estado translúcida, iOS
+   mide la ventana más corta en el alto de la barra de estado (innerHeight y 100dvh incluidos) y queda una franja vacía
+   bajo las pestañas. Se suma ese alto al documento y Layout toma su alto de aquí (h-full). Cuando iOS mide bien,
+   min() deja exactamente el alto de la pantalla (100lvh); en Android el borde superior es 0 y tampoco cambia nada. */
+@media (display-mode: standalone) {
+  html {
+    height: min(100lvh, calc(100% + env(safe-area-inset-top)));
+  }
+  body,
+  #root {
+    height: 100%;
+  }
+}
 .modo-app header,
 .modo-app nav {
   -webkit-user-select: none;
@@ -260,4 +317,11 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .barra-progreso { animation: none; transform: none; }
+}
+
+/* Aviso de modo vertical: el celular se inclina y vuelve a quedar derecho */
+@keyframes girar-vertical {
+  0%, 20% { transform: rotate(-90deg); }
+  50%, 80% { transform: rotate(0deg); }
+  100% { transform: rotate(-90deg); }
 }

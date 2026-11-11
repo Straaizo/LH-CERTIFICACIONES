@@ -51,7 +51,7 @@ function porquesCompletos(causa: string[]): number {
 export function NoConformidadDetalle() {
   const { id } = useParams()
   const { datos: nc, cargando, error, recargar, setDatos } = useDatos<NoConformidad>(`/no-conformidades/${id}`)
-  const { datos: codigos } = useDatos<Record<string, number>>('/documentos/codigos')
+  const { datos: codigos } = useDatos<Record<string, string>>('/documentos/codigos')
   const { esCertificaciones, puede } = useSesionActiva()
   const puedeEscribir = puede('NC_EDITAR')
   const { avisar, nodo } = useAviso()
@@ -145,7 +145,7 @@ function Encabezado({ nc }: { nc: NoConformidad }) {
       <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            No conformidad #{nc.id} · {nc.protocolo.codigo}
+            No conformidad #{nc.id.slice(0, 8)} · {nc.protocolo.codigo}
           </p>
           <h1 className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">
             <span className="font-mono">{nc.requisito.codigo}</span>
@@ -264,7 +264,7 @@ function Stepper({ nc }: { nc: NoConformidad }) {
 
 // ---------- Hallazgo ----------
 
-function TarjetaHallazgo({ nc, codigos }: { nc: NoConformidad; codigos: Record<string, number> }) {
+function TarjetaHallazgo({ nc, codigos }: { nc: NoConformidad; codigos: Record<string, string> }) {
   return (
     <section aria-labelledby="titulo-hallazgo" className={claseTarjeta}>
       <header className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
@@ -727,7 +727,7 @@ function FormularioPlan({ nc, editable, puedeSubir, onGuardado, onEvidencia }: {
 
       {editable && (
         <div
-          className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-4px_16px_rgba(15,23,42,0.08)] backdrop-blur lg:sticky lg:bottom-4 lg:rounded-xl lg:border lg:pb-3 lg:shadow-md"
+          className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-4px_16px_rgba(15,23,42,0.08)] lg:sticky lg:bottom-4 lg:rounded-xl lg:border lg:pb-3 lg:shadow-md"
           aria-label="Acciones del plan"
           role="region"
         >
@@ -834,14 +834,14 @@ function IconoArchivo({ nombre }: { nombre: string | null }) {
 }
 
 function Evidencias({ ncId, evidencias, editable, onAgregada }: {
-  ncId: number
+  ncId: string
   evidencias: AccionCorrectiva[]
   editable: boolean
   onAgregada: (nc: NoConformidad) => void
 }) {
   const subida = useAccion()
   const apertura = useAccion()
-  const [abriendo, setAbriendo] = useState<number | null>(null)
+  const [abriendo, setAbriendo] = useState<string | null>(null)
   const [subiendo, setSubiendo] = useState<string | null>(null)
   const [arrastrando, setArrastrando] = useState(false)
   const refArchivo = useRef<HTMLInputElement>(null)

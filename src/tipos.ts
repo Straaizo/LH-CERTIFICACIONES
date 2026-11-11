@@ -8,6 +8,16 @@ export type Permiso =
   | 'LABORATORIO_EDITAR'
   | 'AMBIENTE_EDITAR'
   | 'CERTIFICACIONES_VER'
+  | 'CERTIFICACIONES_HISTORIAL'
+  | 'REGISTROS_VER'
+  | 'NC_VER'
+  | 'LABORATORIO_VER'
+  | 'AMBIENTE_VER'
+  | 'AUDITORIAS_VER'
+  | 'DOCUMENTOS_VER'
+
+/** Módulos que el usuario puede ver (permiso _VER o _EDITAR, o ADMIN / CERTIFICACIONES_VER). Lo calcula la API. */
+export type Modulo = 'REGISTROS' | 'DOCUMENTOS' | 'LABORATORIO' | 'AUDITORIAS' | 'NC' | 'AMBIENTE'
 
 /** Sucursal de general_dim_sucursal. tipo: ámbito de normas y plantillas (packing = planta). */
 export interface UnidadRef {
@@ -27,16 +37,17 @@ export interface Usuario {
   email: string
   rol: Rol
   permisos: Permiso[]
+  modulos: Modulo[]
   unidades: UnidadRef[]
 }
 
 export interface Catalogos {
   empresas: { id: number; codigo: string; nombre: string }[]
   unidades: UnidadRef[]
-  areas: { id: number; nombre: string; unidad_id: number }[]
+  areas: { id: string; nombre: string; unidad_id: number }[]
   temporadas: { id: number; nombre: string; inicio: string; fin: string; actual: boolean }[]
   protocolos: {
-    id: number
+    id: string
     codigo: string
     nombre: string
     ambito: 'campo' | 'planta' | 'ambos'
@@ -44,22 +55,22 @@ export interface Catalogos {
     unidades_aplica: number[]
     /** Si no está vacío, el protocolo solo aplica a estas unidades (p. ej. PrimusGFS) */
     solo_unidades: number[]
-    versiones: { id: number; nombre: string; vigente: boolean; requisitos: number; cargada_en: string | null; archivo: string | null }[]
+    versiones: { id: string; nombre: string; vigente: boolean; requisitos: number; cargada_en: string | null; archivo: string | null }[]
   }[]
-  categorias: { id: number; nombre: string; ambito: string; requiere_vencimiento: boolean; requiere_codigo: boolean }[]
-  tipos_analisis: { id: number; nombre: string; ambito: string; usa_fuente_agua: boolean; usa_especie: boolean }[]
+  categorias: { id: string; nombre: string; ambito: string; requiere_vencimiento: boolean; requiere_codigo: boolean }[]
+  tipos_analisis: { id: string; nombre: string; ambito: string; usa_fuente_agua: boolean; usa_especie: boolean }[]
   limites: {
-    id: number
-    tipo_analisis_id: number
+    id: string
+    tipo_analisis_id: string
     parametro: string
     unidad_medida: string | null
     minimo: number | null
     maximo: number | null
     norma: string | null
   }[]
-  fuentes_agua: { id: number; nombre: string; unidades: number[] }[]
-  especies: { id: number; nombre: string }[]
-  materiales_reciclaje: { id: number; nombre: string }[]
+  fuentes_agua: { id: string; nombre: string; unidades: number[] }[]
+  especies: { id: string; nombre: string }[]
+  materiales_reciclaje: { id: string; nombre: string }[]
   usuarios: { id: string; nombre: string; rol: Rol }[]
 }
 
@@ -67,11 +78,11 @@ export interface Filtros {
   empresa_id?: number
   unidad_id?: number
   temporada_id?: number
-  protocolo_id?: number
+  protocolo_id?: string
 }
 
 export interface VersionDoc {
-  id: number
+  id: string
   numero: number
   nombre_archivo: string | null
   tipo_contenido: string | null
@@ -90,7 +101,7 @@ export interface VersionDoc {
 
 /** Ficha de un certificado de protocolo (una por versión: renovar = versión nueva). */
 export interface FichaCertificado {
-  protocolo: { id: number; codigo: string; nombre: string }
+  protocolo: { id: string; codigo: string; nombre: string }
   numero: string | null
   norma_version: string | null
   entidad_certificadora: string | null
@@ -105,7 +116,7 @@ export interface FichaCertificado {
 
 /** Ficha propuesta al leer un certificado (se guarda tal cual si certificaciones acepta rellenar). */
 export interface PropuestaCertificado {
-  protocolo_id: number
+  protocolo_id: string
   protocolo: string
   numero: string | null
   norma_version: string | null
@@ -123,7 +134,7 @@ export interface AnalisisDocumento {
   /** "el certificado GLOBALG.A.P. de Agrícola La Hornilla", "un procedimiento con código P OC CE 29" */
   descripcion: string | null
   propuesta: {
-    categoria_id: number | null
+    categoria_id: string | null
     empresa_id: number | null
     seccion: SeccionDoc | null
     titulo: string | null
@@ -133,14 +144,14 @@ export interface AnalisisDocumento {
     certificado: PropuestaCertificado | null
   } | null
   /** Documento ya cargado al que se parece (mismo código o mismo certificado) */
-  parecido: { id: number; titulo: string; codigo: string | null; motivo: string; requiere_vencimiento: boolean } | null
+  parecido: { id: string; titulo: string; codigo: string | null; motivo: string; requiere_vencimiento: boolean } | null
 }
 
 export interface Documento {
-  id: number
+  id: string
   titulo: string
   codigo: string | null
-  categoria: { id: number; nombre: string }
+  categoria: { id: string; nombre: string }
   empresa_id: number
   seccion: SeccionDoc
   vigente: VersionDoc | null
@@ -155,7 +166,7 @@ export type SeccionDoc = 'empresarial' | 'campo' | 'planta'
 /** Certificado subido como documento fijo, con la fecha de vencimiento de su versión vigente. */
 export interface Vencimiento {
   tipo: 'certificado'
-  id: number
+  id: string
   titulo: string
   codigo: string | null
   detalle: string
@@ -174,7 +185,7 @@ export interface Vencimiento {
 }
 
 export interface ResultadoAnalisis {
-  id: number
+  id: string
   parametro: string
   valor: number | null
   valor_texto: string | null
@@ -185,11 +196,11 @@ export interface ResultadoAnalisis {
 }
 
 export interface Analisis {
-  id: number
-  tipo: { id: number; nombre: string; ambito: string }
+  id: string
+  tipo: { id: string; nombre: string; ambito: string }
   unidad: UnidadRef
   fuente_agua: string | null
-  especie: { id: number; nombre: string } | null
+  especie: { id: string; nombre: string } | null
   punto: string | null
   fecha_muestreo: string
   laboratorio: string | null
@@ -212,7 +223,7 @@ export interface ResumenAuditoria {
 }
 
 export interface Auditoria {
-  id: number
+  id: string
   titulo: string
   fecha: string
   fecha_inicio: string
@@ -225,8 +236,8 @@ export interface Auditoria {
   temporada_id: number
   archivo_origen: string | null
   advertencias: string[]
-  protocolo: { id: number; codigo: string; nombre: string }
-  version: { id: number; nombre: string }
+  protocolo: { id: string; codigo: string; nombre: string }
+  version: { id: string; nombre: string }
   unidad: UnidadRef
   resumen: ResumenAuditoria
   no_conformidades: number
@@ -234,7 +245,7 @@ export interface Auditoria {
 
 export interface ItemChecklist {
   requisito: {
-    id: number
+    id: string
     codigo: string
     texto: string
     nivel: string | null
@@ -243,10 +254,10 @@ export interface ItemChecklist {
   }
   resultado: 'si' | 'no' | 'na' | null
   comentario: string | null
-  area_id: number | null
+  area_id: string | null
   advertencia: string | null
-  no_conformidad: { id: number; estado: string; repetida?: boolean; reincidencias: number } | null
-  historial: { auditoria_id: number; fecha: string; resultado: string; comentario: string | null }[]
+  no_conformidad: { id: string; estado: string; repetida?: boolean; reincidencias: number } | null
+  historial: { auditoria_id: string; fecha: string; resultado: string; comentario: string | null }[]
 }
 
 export interface AvanceClausula {
@@ -260,7 +271,7 @@ export interface AvanceClausula {
 export interface AuditoriaDetalle extends Auditoria {
   items: ItemChecklist[]
   clausulas: AvanceClausula[]
-  areas: { id: number; nombre: string }[]
+  areas: { id: string; nombre: string }[]
 }
 
 export interface PlanNc {
@@ -280,7 +291,7 @@ export interface RevisionNc {
 }
 
 export interface NoConformidad {
-  id: number
+  id: string
   descripcion: string
   tipo: 'infraestructura' | 'documental' | 'operacional' | null
   clasificacion: 'menor' | 'mayor' | 'critica' | null
@@ -289,29 +300,29 @@ export interface NoConformidad {
   fecha_deteccion: string
   dias_abierta: number
   vencida: boolean
-  requisito: { id: number; codigo: string; nivel: string | null; texto?: string }
-  protocolo: { id: number; codigo: string }
-  auditoria: { id: number; fecha: string; titulo: string; emitida_en: string | null }
+  requisito: { id: string; codigo: string; nivel: string | null; texto?: string }
+  protocolo: { id: string; codigo: string }
+  auditoria: { id: string; fecha: string; titulo: string; emitida_en: string | null }
   clausula: string
   clausula_titulo: string | null
   dias_para_plazo: number | null
   plan: PlanNc
   unidad: UnidadRef
-  area: { id: number; nombre: string } | null
+  area: { id: string; nombre: string } | null
   responsable: { id: string; nombre: string } | null
   reincidente: boolean
   reincidencias: number
   ultima_revision: RevisionNc | null
   revisiones?: RevisionNc[]
   repetida?: boolean
-  repetida_de?: { id: number; fecha: string } | null
+  repetida_de?: { id: string; fecha: string } | null
   acciones: number | AccionCorrectiva[]
   cerrada_en: string | null
-  historial_repeticiones?: { id: number; fecha: string; estado: string; descripcion: string }[]
+  historial_repeticiones?: { id: string; fecha: string; estado: string; descripcion: string }[]
 }
 
 export interface AccionCorrectiva {
-  id: number
+  id: string
   descripcion: string
   nombre_archivo: string | null
   tiene_evidencia: boolean

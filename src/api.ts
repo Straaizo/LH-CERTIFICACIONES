@@ -111,8 +111,16 @@ export function configurarAuth(fn: () => Promise<Record<string, string>>) {
   obtenerCabeceraAuth = fn
 }
 
+/** Aviso de archivo repetido (409): qué ya existe y qué ofrece hacer la API */
+export interface DetalleRepetido {
+  codigo: 'duplicado'
+  mensaje: string
+  existentes: { nombre: string; detalle: string }[]
+  accion: string
+}
+
 export class ErrorApi extends Error {
-  constructor(public estado: number, mensaje: string) {
+  constructor(public estado: number, mensaje: string, public repetido?: DetalleRepetido) {
     super(mensaje)
   }
 }
@@ -150,14 +158,19 @@ async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown, params?:
   }
   if (!respuesta.ok) {
     let mensaje = `Error ${respuesta.status}`
+    let repetido: DetalleRepetido | undefined
     try {
       const datos = await respuesta.json()
       if (typeof datos.detail === 'string') mensaje = datos.detail
       else if (Array.isArray(datos.detail)) mensaje = datos.detail.map((d: { msg: string }) => d.msg).join('; ')
+      else if (datos.detail?.codigo === 'duplicado') {
+        repetido = datos.detail as DetalleRepetido
+        mensaje = repetido.mensaje
+      }
     } catch {
       /* respuesta sin JSON */
     }
-    throw new ErrorApi(respuesta.status, mensaje)
+    throw new ErrorApi(respuesta.status, mensaje, repetido)
   }
   if (respuesta.status === 204) return undefined as T
   return respuesta.json() as Promise<T>
@@ -165,7 +178,7 @@ async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown, params?:
 
 export const api = {
   get: <T>(ruta: string, params?: Params) => pedir<T>('GET', ruta, undefined, params),
-  post: <T>(ruta: string, cuerpo?: unknown) => pedir<T>('POST', ruta, cuerpo ?? {}),
+  post: <T>(ruta: string, cuerpo?: unknown, params?: Params) => pedir<T>('POST', ruta, cuerpo ?? {}, params),
   put: <T>(ruta: string, cuerpo: unknown) => pedir<T>('PUT', ruta, cuerpo),
   patch: <T>(ruta: string, cuerpo: unknown) => pedir<T>('PATCH', ruta, cuerpo),
   delete: <T>(ruta: string) => pedir<T>('DELETE', ruta),
@@ -202,12 +215,21 @@ export async function abrirUrlFirmada(ruta: string) {
 /** Carga en dos pasos: URL firmada desde la API y PUT directo al almacenamiento. Devuelve la clave. */
 export async function subirArchivo(archivo: File, prefijo: 'documentos' | 'analisis' | 'evidencias' | 'registros') {
   const tipo = archivo.type || 'application/octet-stream'
-  const { clave, url } = await api.post<{ clave: string; url: string }>('/archivos/url-subida', {
+  const { clave, url, cabeceras, max_bytes } = await api.post<{
+    clave: string
+    url: string
+    cabeceras?: Record<string, string>
+    max_bytes?: number
+  }>('/archivos/url-subida', {
     prefijo,
     nombre_archivo: archivo.name,
     tipo_contenido: tipo,
   })
-  const respuesta = await fetch(alcanzable(url), { method: 'PUT', headers: { 'Content-Type': tipo }, body: archivo })
+  if (max_bytes && archivo.size > max_bytes) {
+    throw new ErrorApi(413, `El archivo supera el máximo de ${Math.round(max_bytes / 1048576)} MB`)
+  }
+  // Las cabeceras van firmadas en la URL (tamaño máximo): sin ellas, Cloud Storage rechaza la subida
+  const respuesta = await fetch(alcanzable(url), { method: 'PUT', headers: { ...cabeceras, 'Content-Type': tipo }, body: archivo })
   if (!respuesta.ok) throw new ErrorApi(respuesta.status, 'No se pudo subir el archivo')
   return { clave, nombre: archivo.name, tipo }
 }

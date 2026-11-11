@@ -20,7 +20,7 @@ const MODULOS = [
 const ESCRITORIO = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
 
 const claseCampo =
-  'h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-[15px] text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus:border-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-700/15'
+  'h-[52px] w-full rounded-lg border border-transparent bg-slate-100 px-4 text-[15px] text-slate-900 transition-colors placeholder:text-slate-500 focus:border-emerald-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-700'
 
 function Marca({ claro = false }: { claro?: boolean }) {
   return (
@@ -43,8 +43,8 @@ function Portada({ compacta = false }: { compacta?: boolean }) {
   return (
     <div className="text-white">
       <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-        Viento Sur · La Hornilla
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+        La Hornilla · Viento Sur
       </span>
       <h1 className={`mt-5 font-bold leading-[1.05] tracking-tight ${compacta ? 'text-[28px]' : 'text-[44px] xl:text-[52px]'}`}>
         Toda la certificación
@@ -144,13 +144,13 @@ export function Ingreso() {
           </button>
         </div>
         {ayudaClave && (
-          <p className="mt-2 rounded-lg bg-slate-100 px-3 py-2 text-[13px] text-slate-600">
+          <p className="mt-2 rounded-lg bg-sky-50 px-3 py-2 text-[13px] text-sky-800">
             Es la misma clave del portal La Hornilla. Para recuperarla, contacta a soporte TI.
           </p>
         )}
       </div>
       <button type="submit" disabled={ocupado}
-        className="group mt-1 flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-700 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-700/30 disabled:bg-emerald-700/60">
+        className="group mt-1 flex h-[52px] items-center justify-center gap-2 rounded-lg bg-emerald-700 text-[15px] font-semibold tracking-[0.01em] text-white transition-colors hover:bg-emerald-800 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-700/30 disabled:bg-emerald-700/60">
         {ocupado ? 'Entrando…' : 'Entrar'}
         {!ocupado && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
       </button>
@@ -166,7 +166,7 @@ export function Ingreso() {
           value={claveDemo} onChange={(e) => setClaveDemo(e.target.value)} />
       </div>
       <button type="submit" disabled={usuarios === null}
-        className="flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-700 text-[15px] font-semibold text-white hover:bg-emerald-800 disabled:bg-emerald-700/60">
+        className="flex h-[52px] items-center justify-center gap-2 rounded-lg bg-emerald-700 text-[15px] font-semibold text-white hover:bg-emerald-800 disabled:bg-emerald-700/60">
         <KeyRound className="h-4 w-4" /> Entrar
       </button>
     </form>
@@ -177,7 +177,7 @@ export function Ingreso() {
       <p className="mb-1 text-sm text-slate-600"><strong>Modo demo.</strong> Elige con qué perfil entrar.</p>
       {usuarios.map((u) => (
         <button key={u.id} disabled={ocupado} onClick={() => void ejecutar(() => ingresarDemo(u.id))}
-          className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-emerald-600 hover:bg-emerald-50 disabled:opacity-50">
+          className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:border-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
           <span className="min-w-0">
             <span className="block text-sm font-semibold text-slate-900">{u.nombre}</span>
             <span className="block truncate text-xs text-slate-500">
@@ -191,7 +191,7 @@ export function Ingreso() {
   )
 
   return (
-    <div className="min-h-dvh bg-fondo lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+    <div className="min-h-dvh bg-fondo lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:bg-superficie">
       {/* Escritorio: panel de fotos */}
       <aside className="relative hidden overflow-hidden lg:flex lg:min-h-dvh lg:flex-col lg:justify-between lg:p-10 xl:p-14">
         <FondoCarrusel imagenes={carrusel.imagenes} actual={carrusel.actual} />
@@ -215,8 +215,8 @@ export function Ingreso() {
       </header>
 
       <main className="relative -mt-8 flex justify-center px-4 pb-[max(2rem,env(safe-area-inset-bottom))] lg:mt-0 lg:min-h-dvh lg:items-center lg:px-10 lg:pb-10">
-        <div className="w-full max-w-[400px] rounded-3xl bg-superficie p-6 shadow-[0_24px_60px_-20px_rgba(16,40,16,0.35)] sm:p-8 lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none">
-          <h2 className="text-[26px] font-bold tracking-tight text-slate-950">Iniciar sesión</h2>
+        <div className="w-full max-w-[400px] rounded-2xl border border-slate-200 bg-superficie p-6 shadow-[0_24px_60px_-20px_rgba(15,30,19,0.35)] lg:border-0 sm:p-8 lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none">
+          <h2 className="text-[28px] font-bold tracking-[-0.02em] text-slate-950">Iniciar sesión</h2>
           <p className="mt-1.5 text-sm text-slate-500">
             {AUTH_MODO === 'demo' ? 'Versión de prueba del Portal Certificaciones.' : 'Usa tus credenciales del portal La Hornilla.'}
           </p>

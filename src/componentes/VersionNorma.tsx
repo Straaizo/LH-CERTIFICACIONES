@@ -5,13 +5,13 @@ import { fecha } from '../formato'
 import { Cargando, Insignia, MensajeError, Modal, Vacio, claseEntrada } from './ui'
 
 interface VersionDetalle {
-  id: number
+  id: string
   nombre: string
   vigente: boolean
   cargada_en: string | null
   archivo: string | null
   protocolo: { codigo: string; nombre: string }
-  requisitos: { id: number; codigo: string; seccion: string | null; seccion_titulo: string | null; texto: string; nivel: string | null }[]
+  requisitos: { id: string; codigo: string; seccion: string | null; seccion_titulo: string | null; texto: string; nivel: string | null }[]
 }
 
 const NIVEL: Record<string, { texto: string; tono: 'rojo' | 'amarillo' | 'gris' }> = {
@@ -22,7 +22,7 @@ const NIVEL: Record<string, { texto: string; tono: 'rojo' | 'amarillo' | 'gris' 
 }
 
 /** Puntos de control de una versión de norma, agrupados por sección y con buscador (solo lectura). */
-export function VerVersionNorma({ versionId, onCerrar }: { versionId: number; onCerrar: () => void }) {
+export function VerVersionNorma({ versionId, onCerrar }: { versionId: string; onCerrar: () => void }) {
   const { datos, cargando, error, recargar } = useDatos<VersionDetalle>(`/versiones/${versionId}/requisitos`)
   const [busqueda, setBusqueda] = useState('')
   const grupos = useMemo(() => {

@@ -46,4 +46,5 @@ export const ETIQUETA_NIVEL: Record<string, string> = {
   menor: 'Menor',
   recomendacion: 'Recomendación',
   fundamental: 'Fundamental',
+  sin_nivel: 'Sin nivel',
 }

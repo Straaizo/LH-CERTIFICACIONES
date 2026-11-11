@@ -9,6 +9,7 @@ import {
   Boton, Campo, CampoArchivo, Cargando, EncabezadoPagina, Insignia, MensajeError, Modal, Vacio, claseEntrada,
   useAviso,
 } from '../componentes/ui'
+import { useConfirmarRepetido } from '../componentes/ConfirmarRepetido'
 import { Selector } from '../componentes/Desplegable'
 
 function textoLimite(min: number | null, max: number | null): string {
@@ -35,7 +36,7 @@ export function Laboratorio() {
   const [tipoId, setTipoId] = useState('')
   const [tipoUnidad, setTipoUnidad] = useState<'' | 'campo' | 'planta'>('')
   const [soloFuera, setSoloFuera] = useState(false)
-  const [abiertos, setAbiertos] = useState<Set<number>>(new Set())
+  const [abiertos, setAbiertos] = useState<Set<string>>(new Set())
   const [nuevoAbierto, setNuevoAbierto] = useState(false)
   const [alertaFuera, setAlertaFuera] = useState<Analisis | null>(null)
   const { avisar, nodo: nodoAviso } = useAviso()
@@ -53,7 +54,7 @@ export function Laboratorio() {
   const tiposVisibles = catalogos.tipos_analisis.filter((t) => t.ambito === 'campo')
   const lista = datos ?? []
 
-  const alternar = (id: number) =>
+  const alternar = (id: string) =>
     setAbiertos((s) => {
       const n = new Set(s)
       if (n.has(id)) n.delete(id)
@@ -61,7 +62,7 @@ export function Laboratorio() {
       return n
     })
 
-  const verInforme = (id: number) => informe.ejecutar(() => abrirUrlFirmada(`/laboratorio/analisis/${id}/informe`))
+  const verInforme = (id: string) => informe.ejecutar(() => abrirUrlFirmada(`/laboratorio/analisis/${id}/informe`))
 
   const lugar = (a: Analisis) => [a.fuente_agua, a.punto].filter(Boolean).join(' · ') || '—'
 
@@ -95,18 +96,18 @@ export function Laboratorio() {
       <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center">
         {sucursalElegida ? (
           <span className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700">
-            {sucursalElegida.nombre} ({sucursalElegida.tipo === 'planta' ? 'planta' : 'campo'})
+            {sucursalElegida.nombre} ({sucursalElegida.tipo_nombre.toLowerCase()})
           </span>
         ) : (
-          <div role="group" aria-label="Filtrar por campo o planta" className="inline-flex h-10 w-fit shrink-0 items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-            {([['', 'Mostrar todo'], ['campo', 'Campo'], ['planta', 'Planta']] as const).map(([valor, etiqueta]) => (
+          <div role="group" aria-label="Filtrar por campo o packing" className="inline-flex h-11 w-fit shrink-0 items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:h-10">
+            {([['', 'Mostrar todo'], ['campo', 'Campo'], ['planta', 'Packing']] as const).map(([valor, etiqueta]) => (
               <button
                 key={valor || 'todos'}
                 type="button"
                 aria-pressed={tipoUnidad === valor}
                 onClick={() => setTipoUnidad(valor)}
-                className={`h-8 rounded-lg px-3.5 text-sm font-semibold transition-colors ${
-                  tipoUnidad === valor ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                className={`h-9 rounded-lg px-3.5 text-sm font-semibold transition-colors lg:h-8 ${
+                  tipoUnidad === valor ? 'bg-emerald-700 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 {etiqueta}
@@ -243,12 +244,12 @@ interface FilaResultado {
 
 interface LecturaInforme {
   texto_leido: boolean
-  tipo_analisis_id: number | null
+  tipo_analisis_id: string | null
   tipo_sugerido: string | null
   fecha_muestreo: string | null
   laboratorio: string | null
   punto: string | null
-  especie_id: number | null
+  especie_id: string | null
   resultados: { parametro: string; valor: number | null; valor_texto: string | null; linea: string | null }[]
   no_encontrados: string[]
   advertencias: string[]
@@ -276,23 +277,24 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
   const { catalogos, filtros } = useSesionActiva()
   const unidades = catalogos.unidades.filter((u) => u.tipo === 'campo')
   const tipos = catalogos.tipos_analisis.filter((t) => t.ambito === 'campo')
-  const [tipoId, setTipoId] = useState<number | undefined>()
+  const [tipoId, setTipoId] = useState<string | undefined>()
   const [unidadId, setUnidadId] = useState<number | undefined>(
     unidades.some((u) => u.id === filtros.unidad_id) ? filtros.unidad_id : undefined,
   )
-  const [fuenteId, setFuenteId] = useState<number | undefined>()
-  const [especieId, setEspecieId] = useState<number | undefined>()
+  const [fuenteId, setFuenteId] = useState<string | undefined>()
+  const [especieId, setEspecieId] = useState<string | undefined>()
   const [punto, setPunto] = useState('')
   const [fechaMuestreo, setFechaMuestreo] = useState(hoyIso())
   const [fechaTocada, setFechaTocada] = useState(false)
   const [laboratorio, setLaboratorio] = useState('')
   const [archivo, setArchivo] = useState<File | null>(null)
   const [subido, setSubido] = useState<{ clave: string; nombre: string } | null>(null)
-  const [leidoCon, setLeidoCon] = useState<{ tipoId?: number; unidadId?: number } | null>(null)
+  const [leidoCon, setLeidoCon] = useState<{ tipoId?: string; unidadId?: number } | null>(null)
   const [resumen, setResumen] = useState<ResumenLectura | null>(null)
   const [leidos, setLeidos] = useState<Set<CampoLeido>>(new Set())
   const [filas, setFilas] = useState<FilaResultado[]>([])
   const accion = useAccion()
+  const repetido = useConfirmarRepetido()
   const lectura = useAccion()
 
   const tipo = tipos.find((t) => t.id === tipoId)
@@ -307,7 +309,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
       return n
     })
 
-  const filasDeTipo = (id: number | undefined): FilaResultado[] =>
+  const filasDeTipo = (id: string | undefined): FilaResultado[] =>
     catalogos.limites
       .filter((l) => l.tipo_analisis_id === id)
       .map((l) => ({
@@ -322,7 +324,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
         linea: null,
       }))
 
-  const cambiarTipo = (id: number | undefined) => {
+  const cambiarTipo = (id: string | undefined) => {
     setTipoId(id)
     quitarLeido('tipo')
     if (!tipos.find((t) => t.id === id)?.usa_especie) {
@@ -453,7 +455,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
         }
       })
     if (!resultados.length) return accion.setError('Ingresa al menos un resultado')
-    const r: { analisis?: Analisis } = {}
+    const r: { analisis?: Analisis | null } = {}
     const ok = await accion.ejecutar(async () => {
       let informe = subido
       if (!informe && archivo) {
@@ -461,7 +463,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
         informe = { clave: s.clave, nombre: s.nombre }
         setSubido(informe)
       }
-      r.analisis = await api.post<Analisis>('/laboratorio/analisis', {
+      r.analisis = await repetido.intentar((reemplazar) => api.post<Analisis>('/laboratorio/analisis', {
         tipo_analisis_id: tipo.id,
         unidad_id: unidadId,
         fuente_agua_id: tipo.usa_fuente_agua ? fuenteId : null,
@@ -472,7 +474,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
         archivo_key: informe?.clave ?? null,
         nombre_archivo: informe?.nombre ?? null,
         resultados,
-      })
+      }, { reemplazar }))
     })
     if (ok && r.analisis) onCreado(r.analisis)
   }
@@ -481,6 +483,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
 
   return (
     <Modal abierto titulo="Nuevo análisis" onCerrar={onCerrar} ancho="max-w-3xl">
+      {repetido.nodo}
       <form onSubmit={guardar} className="space-y-4">
         <section className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <h3 className="text-sm font-semibold text-slate-800">1. Sube el informe del laboratorio</h3>
@@ -528,7 +531,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Campo etiqueta="Tipo de análisis">
-            <Selector className={claseCampo('tipo')} value={tipoId ?? ''} required onChange={(e) => cambiarTipo(Number(e.target.value) || undefined)}>
+            <Selector className={claseCampo('tipo')} value={tipoId ?? ''} required onChange={(e) => cambiarTipo(e.target.value || undefined)}>
               <option value="" disabled>Elige un tipo</option>
               {tipos.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
             </Selector>
@@ -543,7 +546,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
           {tipo?.usa_especie && (
             <Campo etiqueta="Especie" ayuda="Especies de este campo">
               <Selector className={claseCampo('especie')} value={especieId ?? ''} required
-                onChange={(e) => { setEspecieId(Number(e.target.value) || undefined); quitarLeido('especie') }}>
+                onChange={(e) => { setEspecieId(e.target.value || undefined); quitarLeido('especie') }}>
                 <option value="" disabled>
                   {unidadId ? (especies.length ? 'Elige una especie' : 'Este campo no tiene especies registradas') : 'Elige primero el campo'}
                 </option>
@@ -554,7 +557,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
           )}
           {tipo?.usa_fuente_agua && (
             <Campo etiqueta="Fuente de agua">
-              <Selector className={claseEntrada} value={fuenteId ?? ''} required onChange={(e) => setFuenteId(Number(e.target.value) || undefined)}>
+              <Selector className={claseEntrada} value={fuenteId ?? ''} required onChange={(e) => setFuenteId(e.target.value || undefined)}>
                 <option value="" disabled>{unidadId ? (fuentes.length ? 'Elige una fuente' : 'El campo no tiene fuentes registradas') : 'Elige primero el campo'}</option>
                 {fuentes.map((f) => <option key={f.id} value={f.id}>{f.nombre}</option>)}
               </Selector>

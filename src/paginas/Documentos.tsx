@@ -13,6 +13,7 @@ import {
   Boton, Campo, CampoArchivo, Cargando, EncabezadoPagina, Insignia, MensajeError, Modal, Pestanas, Vacio, claseEntrada,
   useAviso,
 } from '../componentes/ui'
+import { useConfirmarRepetido } from '../componentes/ConfirmarRepetido'
 import { Selector } from '../componentes/Desplegable'
 
 export const SECCIONES: Record<SeccionDoc, { etiqueta: string; corta: string }> = {
@@ -61,8 +62,8 @@ export function Documentos({ embebido = false }: { embebido?: boolean }) {
     q: busqueda.trim() || undefined,
   })
 
-  const docAbierto = Number(parametros.get('doc')) || null
-  const abrirDetalle = (id: number) =>
+  const docAbierto = parametros.get('doc') || null
+  const abrirDetalle = (id: string) =>
     setParametros((p) => { const n = new URLSearchParams(p); n.set('doc', String(id)); return n })
   const cerrarDetalle = () =>
     setParametros((p) => { const n = new URLSearchParams(p); n.delete('doc'); return n })
@@ -230,7 +231,7 @@ export function Documentos({ embebido = false }: { embebido?: boolean }) {
 // ---------- Detalle e historial ----------
 
 function DetalleDocumento({ id, onCerrar, onCambio, puedeSubir }: {
-  id: number
+  id: string
   onCerrar: () => void
   onCambio: (mensaje: string) => void
   puedeSubir: boolean
@@ -239,7 +240,7 @@ function DetalleDocumento({ id, onCerrar, onCambio, puedeSubir }: {
   const { datos: doc, cargando, error, recargar, setDatos } = useDatos<Documento>(`/documentos/${id}`)
   const accion = useAccion()
   const [nuevaVersion, setNuevaVersion] = useState(false)
-  const descargar = (vid: number) => accion.ejecutar(() => abrirUrlFirmada(`/documentos/versiones/${vid}/descarga`))
+  const descargar = (vid: string) => accion.ejecutar(() => abrirUrlFirmada(`/documentos/versiones/${vid}/descarga`))
   const empresa = catalogos.empresas.find((e) => e.id === doc?.empresa_id)
 
   return (
@@ -619,19 +620,23 @@ function NuevaVersion({ doc, onCerrar, onCreada }: {
   const { catalogos } = useSesionActiva()
   const [version, setVersion] = useState<DatosVersion>(VERSION_VACIA)
   const accion = useAccion()
+  const repetido = useConfirmarRepetido()
   const conVencimiento = !!catalogos.categorias.find((c) => c.id === doc.categoria.id)?.requiere_vencimiento
 
   const guardar = async (e: FormEvent) => {
     e.preventDefault()
-    const r: { doc?: Documento } = {}
+    const r: { doc?: Documento | null } = {}
     const ok = await accion.ejecutar(async () => {
-      r.doc = await api.post<Documento>(`/documentos/${doc.id}/versiones`, await armarVersion(version, conVencimiento))
+      const cuerpo = await armarVersion(version, conVencimiento)
+      r.doc = await repetido.intentar((igual) =>
+        api.post<Documento>(`/documentos/${doc.id}/versiones`, cuerpo, { permitir_repetido: igual }))
     })
     if (ok && r.doc) onCreada(r.doc)
   }
 
   return (
     <Modal abierto titulo={`Nueva versión: ${doc.titulo}`} onCerrar={onCerrar}>
+      {repetido.nodo}
       <form onSubmit={guardar} className="space-y-4">
         <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
           La nueva versión pasa a ser la vigente. La versión {textoVersion(doc)} queda guardada en el historial.
@@ -665,37 +670,41 @@ function NuevoDocumento({ seccionInicial, onCerrar, onCreado }: {
     filtros.empresa_id ?? catalogos.unidades.find((u) => u.id === filtros.unidad_id)?.empresa_id ?? catalogos.empresas[0]?.id,
   )
   const [seccion, setSeccion] = useState<SeccionDoc>(seccionInicial)
-  const [categoriaId, setCategoriaId] = useState<number | undefined>()
+  const [categoriaId, setCategoriaId] = useState<string | undefined>()
   const [titulo, setTitulo] = useState('')
   const [codigo, setCodigo] = useState('')
   const [version, setVersion] = useState<DatosVersion>(VERSION_VACIA)
   /** Documento ya cargado al que se agrega el archivo como versión nueva (null = documento nuevo) */
   const [destino, setDestino] = useState<AnalisisDocumento['parecido']>(null)
   const accion = useAccion()
+  const repetido = useConfirmarRepetido()
   const categoria = catalogos.categorias.find((c) => c.id === categoriaId)
 
   const guardar = async (e: FormEvent) => {
     e.preventDefault()
     if (destino) {
-      const r: { doc?: Documento } = {}
+      const r: { doc?: Documento | null } = {}
       const ok = await accion.ejecutar(async () => {
-        r.doc = await api.post<Documento>(`/documentos/${destino.id}/versiones`, await armarVersion(version, destino.requiere_vencimiento))
+        const cuerpo = await armarVersion(version, destino.requiere_vencimiento)
+        r.doc = await repetido.intentar((igual) =>
+          api.post<Documento>(`/documentos/${destino.id}/versiones`, cuerpo, { permitir_repetido: igual }))
       })
       if (ok && r.doc) onCreado(r.doc, 'Versión nueva guardada; la anterior quedó en el historial')
       return
     }
     if (!empresaId) return accion.setError('Elige la empresa')
     if (!categoria) return accion.setError('Elige la categoría')
-    const r: { doc?: Documento } = {}
+    const r: { doc?: Documento | null } = {}
     const ok = await accion.ejecutar(async () => {
-      r.doc = await api.post<Documento>('/documentos', {
+      const cuerpo = {
         categoria_id: categoria.id,
         empresa_id: empresaId,
         seccion,
         titulo: titulo.trim(),
         codigo: codigo.trim() || null,
         version: await armarVersion(version, !!categoria.requiere_vencimiento),
-      })
+      }
+      r.doc = await repetido.intentar((igual) => api.post<Documento>('/documentos', cuerpo, { permitir_repetido: igual }))
     })
     if (ok && r.doc) onCreado(r.doc, 'Documento guardado')
   }
@@ -755,7 +764,7 @@ function NuevoDocumento({ seccionInicial, onCerrar, onCreado }: {
             </Campo>
             <Campo etiqueta="Categoría">
               <Selector className={claseEntrada} value={categoriaId ?? ''} required
-                onChange={(e) => setCategoriaId(Number(e.target.value) || undefined)}>
+                onChange={(e) => setCategoriaId(e.target.value || undefined)}>
                 <option value="" disabled>Elige una categoría</option>
                 {catalogos.categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
               </Selector>
@@ -786,7 +795,7 @@ function NuevoDocumento({ seccionInicial, onCerrar, onCreado }: {
 
 function CarpetaAuditor({ onCerrar }: { onCerrar: () => void }) {
   const { catalogos, filtros, esCertificaciones } = useSesionActiva()
-  const [protocoloId, setProtocoloId] = useState<number | undefined>(filtros.protocolo_id ?? catalogos.protocolos[0]?.id)
+  const [protocoloId, setProtocoloId] = useState<string | undefined>(filtros.protocolo_id ?? catalogos.protocolos[0]?.id)
   const [empresaId, setEmpresaId] = useState<number | undefined>(
     filtros.empresa_id ?? catalogos.unidades.find((u) => u.id === filtros.unidad_id)?.empresa_id ?? catalogos.empresas[0]?.id,
   )
@@ -841,7 +850,7 @@ function CarpetaAuditor({ onCerrar }: { onCerrar: () => void }) {
             </Selector>
           </Campo>
           <Campo etiqueta="Protocolo">
-            <Selector className={claseEntrada} value={protocoloValido ? protocoloId : ''} required onChange={(e) => setProtocoloId(Number(e.target.value) || undefined)}>
+            <Selector className={claseEntrada} value={protocoloValido ? protocoloId : ''} required onChange={(e) => setProtocoloId(e.target.value || undefined)}>
               <option value="" disabled>Elige un protocolo</option>
               {protocolos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
             </Selector>

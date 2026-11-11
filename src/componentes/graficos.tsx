@@ -3,18 +3,18 @@ import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react'
 
 /*
   Gráficos del panel (SVG/HTML propio, sin librerías).
-  Forma "énfasis": la temporada actual en azul (serie 1 validada) y la anterior en gris de contexto (#838d7e,
+  Forma "énfasis": la temporada actual en azul (serie 1 validada) y la anterior en gris de contexto (#8fa898,
   >= 3:1 sobre la superficie). Mejora/empeora usa los colores de estado, siempre con ícono y texto.
 */
 export const COLOR = {
   actual: '#2a78d6',
-  anterior: '#838d7e',
+  anterior: '#8fa898',
   bueno: '#0ca30c',
   malo: '#d03b3b',
-  textoBueno: '#006300',
-  textoMalo: '#b42323',
-  grilla: '#e3e8df',
-  eje: '#c4cdbe',
+  textoBueno: '#1e7443',
+  textoMalo: '#b3302f',
+  grilla: '#e1e9e3',
+  eje: '#cdd8d1',
 }
 
 const formateadores = new Map<number, Intl.NumberFormat>()
@@ -266,14 +266,14 @@ export function LineaComparativa({ meses, actual, anterior, nombreActual, nombre
           {ticks.map((t) => (
             <g key={t}>
               <line x1={m.izq} x2={m.izq + w} y1={y(t)} y2={y(t)} stroke={t === 0 ? COLOR.eje : COLOR.grilla} strokeWidth={1} />
-              <text x={m.izq - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={11} fill="#6b7566" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              <text x={m.izq - 8} y={y(t)} dy="0.32em" textAnchor="end" fontSize={11} fill="#5a7262" style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {compacto(t)}
               </text>
             </g>
           ))}
           {meses.map((mes, i) => (
             (!angosto || i % 2 === 0) && (
-              <text key={mes + i} x={x(i)} y={alto - 8} textAnchor="middle" fontSize={11} fill={i < n ? '#3b4338' : '#6b7566'} fontWeight={i < n ? 600 : 400}>
+              <text key={mes + i} x={x(i)} y={alto - 8} textAnchor="middle" fontSize={11} fill={i < n ? '#2d4030' : '#5a7262'} fontWeight={i < n ? 600 : 400}>
                 {mes}
               </text>
             )
@@ -281,7 +281,7 @@ export function LineaComparativa({ meses, actual, anterior, nombreActual, nombre
           {/* Temporada anterior: contexto en gris */}
           <path d={linea(anterior)} pathLength={1} className="animar-trazo" fill="none" stroke={COLOR.anterior} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
           {!angosto && (
-            <text x={x(anterior.length - 1) + 8} y={y(anterior[anterior.length - 1])} dy="0.32em" fontSize={11} fill="#5a6455">
+            <text x={x(anterior.length - 1) + 8} y={y(anterior[anterior.length - 1])} dy="0.32em" fontSize={11} fill="#5a7262">
               {nombreAnterior}
             </text>
           )}
@@ -291,7 +291,7 @@ export function LineaComparativa({ meses, actual, anterior, nombreActual, nombre
               <path d={area} fill={COLOR.actual} fillOpacity={0.12} className="animar-desvanecer" />
               <path d={linea(actual)} pathLength={1} className="animar-trazo" style={{ animationDelay: '.25s' }} fill="none" stroke={COLOR.actual} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
               <circle cx={x(ultimo)} cy={y(actual[ultimo])} r={5} fill={COLOR.actual} stroke="#fff" strokeWidth={2} className="animar-desvanecer" />
-              <text x={x(ultimo)} y={y(actual[ultimo]) - 12} textAnchor="middle" fontSize={12} fontWeight={700} fill="#172016" className="animar-desvanecer">
+              <text x={x(ultimo)} y={y(actual[ultimo]) - 12} textAnchor="middle" fontSize={12} fontWeight={700} fill="#0f1e13" className="animar-desvanecer">
                 {numero(actual[ultimo], decimales)}
               </text>
             </>
@@ -299,7 +299,7 @@ export function LineaComparativa({ meses, actual, anterior, nombreActual, nombre
           {/* Cursor */}
           {indice !== null && (
             <g pointerEvents="none">
-              <line x1={x(indice)} x2={x(indice)} y1={m.arr} y2={m.arr + h} stroke="#3b4338" strokeWidth={1} opacity={0.35} />
+              <line x1={x(indice)} x2={x(indice)} y1={m.arr} y2={m.arr + h} stroke="#2d4030" strokeWidth={1} opacity={0.35} />
               {vAnt !== null && <circle cx={x(indice)} cy={y(vAnt)} r={4.5} fill={COLOR.anterior} stroke="#fff" strokeWidth={2} />}
               {vAct !== null && <circle cx={x(indice)} cy={y(vAct)} r={5} fill={COLOR.actual} stroke="#fff" strokeWidth={2} />}
             </g>
@@ -386,7 +386,7 @@ export function Mancuernas({ filas, unidad, decimales = 1, menosEsMejor = true, 
                     transform: `translateX(${pct(desde)}%) scaleX(${(pct(hasta) - pct(desde)) / 100})`,
                     ['--desde' as string]: `translateX(${pct(f.anterior)}%) scaleX(0)`,
                     animationDelay: retardo,
-                    backgroundColor: mejora === null ? '#c4cdbe' : mejora ? '#bfe5bf' : '#f2c9c9',
+                    backgroundColor: mejora === null ? '#cdd8d1' : mejora ? '#bfe5bf' : '#f2c9c9',
                   }}
                 />
               </div>

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { AUTH_MODO, api, configurarAuth, guardarTokens, tokenAcceso, type Tokens } from '../api'
-import type { Catalogos, Filtros, Permiso, Usuario } from '../tipos'
+import type { Catalogos, Filtros, Modulo, Permiso, Usuario } from '../tipos'
 
 interface ValorSesion {
   usuario: Usuario | null
@@ -13,6 +13,10 @@ interface ValorSesion {
   ingresar: (usuario: string, clave: string) => Promise<void>
   salir: () => Promise<void>
   esCertificaciones: boolean
+  /** Ve el historial completo de cambios: permiso propio del portal, no basta con ADMIN */
+  veHistorial: boolean
+  /** Puede ver el módulo (el menú y las rutas se ocultan si no) */
+  puedeVer: (modulo: Modulo) => boolean
   puedeEscribir: boolean
   /** Puede editar en el módulo: tiene el permiso del portal web o es administrador */
   puede: (permiso: Permiso) => boolean
@@ -149,6 +153,8 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
         ingresar,
         salir,
         esCertificaciones: usuario?.rol === 'certificaciones',
+        veHistorial: !!usuario?.permisos.includes('CERTIFICACIONES_HISTORIAL'),
+        puedeVer: (modulo: Modulo) => !!usuario?.modulos?.includes(modulo),
         puedeEscribir: !!usuario && usuario.rol !== 'lectura',
         puede,
         recargarCatalogos,

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
-  ArrowLeftRight, BarChart3, CalendarRange, Check, Database, Factory, Flame, Fuel, GitCompareArrows, Info, Leaf, Lightbulb,
+  ArrowLeftRight, BarChart3, CalendarRange, Check, Database, Factory, FileDown, Flame, Fuel, GitCompareArrows, Info, Leaf, Lightbulb,
   Loader2, Recycle, RotateCcw, SlidersHorizontal, Sparkles, Sprout, Table2, Target, TrendingDown, TrendingUp, X, Zap,
 } from 'lucide-react'
-import { api } from '../api'
+import { api, descargarArchivo } from '../api'
 import { useSesionActiva } from '../contexto/Sesion'
+import { useAccion } from '../hooks'
 import { Boton, Campo, MensajeError, Tarjeta, Vacio, claseEntrada } from '../componentes/ui'
 import { Selector } from '../componentes/Desplegable'
 import { EsqueletoPanel } from '../componentes/Esqueletos'
@@ -85,7 +86,7 @@ function Segmentado<T extends string>({ opciones, valor, onCambio, etiqueta }: {
           aria-pressed={valor === v}
           onClick={() => onCambio(v)}
           className={`min-h-8 rounded-lg px-3 text-sm font-semibold transition-colors ${
-            valor === v ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+            valor === v ? 'bg-emerald-700 text-white' : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
           {texto}
@@ -417,6 +418,28 @@ const MS_POR_PASO = 650
 
 type Fase = 'inicio' | 'armando' | 'listo'
 
+/** Informe formal en PDF de la comparativa (a los encargados les llega solo combustibles). */
+export function BotonInformePdf({ temporadaId, anteriorId, variante = 'secundario' }: {
+  temporadaId?: number
+  anteriorId?: number
+  variante?: 'primario' | 'secundario'
+}) {
+  const { filtros } = useSesionActiva()
+  const { ocupado, error, ejecutar } = useAccion()
+  return (
+    <>
+      <Boton variante={variante} ocupado={ocupado} icono={<FileDown className="h-4 w-4" />}
+        onClick={() => void ejecutar(() => descargarArchivo('/ambiente/informe.pdf', {
+          empresa_id: filtros.empresa_id, unidad_id: filtros.unidad_id,
+          temporada_id: temporadaId ?? filtros.temporada_id, anterior_id: anteriorId,
+        }, 'Informe medio ambiente.pdf'))}>
+        Descargar PDF
+      </Boton>
+      {error && <span className="text-sm text-red-700">{error}</span>}
+    </>
+  )
+}
+
 export function ComparativaTemporadas() {
   const { catalogos, filtros } = useSesionActiva()
   const temporadas = [...catalogos.temporadas].sort((a, b) => b.inicio.localeCompare(a.inicio))
@@ -483,6 +506,7 @@ export function ComparativaTemporadas() {
         cargando={recargando}
         acciones={
           <div className="flex flex-wrap gap-2">
+            <BotonInformePdf variante="primario" temporadaId={actualId} anteriorId={anteriorId} />
             <Boton variante="secundario" icono={<SlidersHorizontal className="h-4 w-4" />} onClick={() => setFase('inicio')}>
               Cambiar temporadas
             </Boton>
@@ -559,7 +583,7 @@ export function ComparativaTemporadas() {
                 type="button"
                 onClick={() => void armar()}
                 disabled={!actualId || !anteriorId}
-                className="group mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3.5 text-base font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                className="group mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3.5 text-base font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Sparkles className="h-5 w-5 transition-transform group-hover:rotate-12 group-hover:scale-110" />
                 Armar comparativa
@@ -580,7 +604,7 @@ export function ComparativaTemporadas() {
               <span className="text-3xl font-bold tracking-tight text-slate-900">{avance}%</span>
             </div>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-white shadow-inner">
-              <div className="h-full rounded-full transition-[width] duration-500 ease-out" style={{ width: `${avance}%`, background: `linear-gradient(90deg, ${COLOR.actual}, #0b7a0b)` }} />
+              <div className="h-full rounded-full transition-[width] duration-500 ease-out" style={{ width: `${avance}%`, background: `linear-gradient(90deg, ${COLOR.actual}, #2f7553)` }} />
             </div>
             <ol className="mt-6 space-y-3">
               {PASOS.map((p, i) => {
@@ -647,7 +671,8 @@ export function VentanaComparativa({ abierta, onCerrar }: { abierta: boolean; on
         onClick={(e) => e.stopPropagation()}
         className="mx-auto flex h-full w-full max-w-[1400px] flex-col overflow-hidden bg-fondo shadow-2xl sm:rounded-3xl animar-subir"
       >
-        <header className="flex shrink-0 items-center gap-3 border-b border-slate-200/80 bg-superficie px-4 py-3 sm:px-6 sm:py-4">
+        {/* En el celular ocupa toda la pantalla: el encabezado deja espacio a la barra de estado (hora, batería) */}
+        <header className="flex shrink-0 items-center gap-3 border-b border-slate-200/80 bg-superficie px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:py-4">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm" style={{ backgroundColor: COLOR.actual }}>
             <BarChart3 className="h-5 w-5" />
           </span>
@@ -665,7 +690,7 @@ export function VentanaComparativa({ abierta, onCerrar }: { abierta: boolean; on
             <X className="h-5 w-5" />
           </button>
         </header>
-        <div className="scroll-principal min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-6">
+        <div className="scroll-principal min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:py-6">
           <ComparativaTemporadas />
         </div>
       </div>

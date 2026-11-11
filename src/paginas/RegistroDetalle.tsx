@@ -206,6 +206,9 @@ export function RegistroDetalle() {
         <UltimoCambio registro={registro} className="mt-2" />
       </Tarjeta>
 
+      {/* Arriba, para que certificaciones vea siempre quién cambió qué y cuándo */}
+      <HistorialCambios historial={historial} abiertoInicial={esCertificaciones} />
+
       {registro.estado === 'rechazado' && registro.observacion && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           <div className="font-semibold">Rechazado por certificaciones</div>
@@ -329,7 +332,6 @@ export function RegistroDetalle() {
         </Tarjeta>
       )}
 
-      <HistorialCambios historial={historial} abiertoInicial={esCertificaciones} />
       {nodo}
     </div>
   )
@@ -342,8 +344,10 @@ function HistorialCambios({ historial, abiertoInicial }: {
   abiertoInicial: boolean
 }) {
   const { datos, cargando, error, recargar } = historial
+  const [todos, setTodos] = useState(false)
+  const visibles = todos ? datos : datos?.slice(0, 3)
   return (
-    <details open={abiertoInicial} className="group mt-4 rounded-xl border border-slate-200 bg-white shadow-sm">
+    <details open={abiertoInicial} className="group mb-4 rounded-xl border border-slate-200 bg-white shadow-sm">
       <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-semibold text-slate-800">
         <History className="h-4 w-4 text-emerald-700" /> Historial de cambios
         {datos && <span className="text-xs font-normal text-slate-500">({datos.length})</span>}
@@ -356,7 +360,7 @@ function HistorialCambios({ historial, abiertoInicial }: {
           <p className="text-sm text-slate-500">Sin cambios registrados.</p>
         ) : (
           <ol className="relative space-y-4 border-l border-slate-200 pl-4">
-            {datos.map((e) => (
+            {visibles?.map((e) => (
               <li key={e.id} className="relative text-sm">
                 <span className={`absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full ${
                   e.accion === 'aprobar' ? 'bg-emerald-600' : e.accion === 'rechazar' ? 'bg-red-600' : e.accion === 'enviar' ? 'bg-sky-600' : 'bg-slate-400'
@@ -378,6 +382,11 @@ function HistorialCambios({ historial, abiertoInicial }: {
             ))}
           </ol>
         )}
+        {!!datos && datos.length > 3 && (
+          <button type="button" onClick={() => setTodos((v) => !v)} className="mt-3 min-h-10 text-sm font-medium text-emerald-700 hover:underline">
+            {todos ? 'Ver solo los últimos 3' : `Ver los ${datos.length} cambios`}
+          </button>
+        )}
       </div>
     </details>
   )
@@ -398,7 +407,7 @@ function EditorCampo({ campo, valor, guardado, registroId, onCambio, subida }: {
   campo: CampoRegistro
   valor: unknown
   guardado: unknown
-  registroId: number
+  registroId: string
   onCambio: (v: unknown) => void
   subida: ReturnType<typeof useAccion>
 }) {
@@ -534,7 +543,7 @@ function EditorArchivo({ campo, valor, guardado, registroId, onCambio, subida }:
   campo: CampoRegistro
   valor: unknown
   guardado: unknown
-  registroId: number
+  registroId: string
   onCambio: (v: unknown) => void
   subida: ReturnType<typeof useAccion>
 }) {
@@ -608,7 +617,7 @@ function EditorArchivo({ campo, valor, guardado, registroId, onCambio, subida }:
 
 // ---------- Lectura ----------
 
-function LecturaCampo({ campo, valor, registroId }: { campo: CampoRegistro; valor: unknown; registroId: number }) {
+function LecturaCampo({ campo, valor, registroId }: { campo: CampoRegistro; valor: unknown; registroId: string }) {
   const accion = useAccion()
   if (campo.tipo === 'checklist') return <LecturaChecklist campo={campo} valor={comoChecklist(valor)} />
   if (campo.tipo === 'tabla') {
@@ -673,7 +682,7 @@ function LecturaCampo({ campo, valor, registroId }: { campo: CampoRegistro; valo
 
 // ---------- Logo y checklist ----------
 
-function LogoPlantilla({ plantillaId }: { plantillaId: number }) {
+function LogoPlantilla({ plantillaId }: { plantillaId: string }) {
   const { datos } = useDatos<{ url: string }>(`/registros/plantillas/${plantillaId}/logo`)
   const [fallo, setFallo] = useState(false)
   if (!datos?.url || fallo) return null

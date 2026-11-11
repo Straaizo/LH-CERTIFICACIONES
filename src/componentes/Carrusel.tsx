@@ -72,8 +72,8 @@ export function FondoCarrusel({ imagenes, actual }: { imagenes: Foto[]; actual: 
         </picture>
       ))}
       {/* Velo verde: legibilidad del texto sobre cualquier foto */}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,46,7,0.55)_0%,rgba(5,46,7,0.35)_40%,rgba(5,46,7,0.85)_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,46,7,0.6)_0%,rgba(5,46,7,0.25)_55%,transparent_80%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,30,19,0.55)_0%,rgba(15,30,19,0.35)_40%,rgba(15,30,19,0.85)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,30,19,0.6)_0%,rgba(15,30,19,0.25)_55%,transparent_80%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_100%,rgba(11,122,11,0.35),transparent_60%)]" />
     </div>
   )

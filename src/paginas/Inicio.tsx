@@ -1,10 +1,13 @@
+import { useContext } from 'react'
 import { Link } from 'react-router-dom'
+import { AlarmClockOff, AlertTriangle, CalendarClock, CalendarX, ClipboardCheck, Clock, FlaskConical, RotateCcw } from 'lucide-react'
+import { Hero, Indicador } from '../componentes/Escena'
 import { useSesionActiva } from '../contexto/Sesion'
 import { useDatos } from '../hooks'
 import { fecha, num, textoDias } from '../formato'
 import type { Analisis, NoConformidad, UnidadRef, Vencimiento } from '../tipos'
 import {
-  BarraPorcentaje, Cargando, EncabezadoPagina, Insignia, MensajeError, Tarjeta, Vacio, type Tono,
+  BarraPorcentaje, Cargando, ContextoMiga, Insignia, MensajeError, Tarjeta, Vacio, type Tono,
 } from '../componentes/ui'
 
 type Color = 'verde' | 'amarillo' | 'rojo' | 'gris'
@@ -105,18 +108,6 @@ function ListaNc({ ncs, vacio, detalle }: { ncs: NoConformidad[]; vacio: string;
         </li>
       ))}
     </ul>
-  )
-}
-
-function Kpi({ etiqueta, valor, enlace, alerta }: { etiqueta: string; valor: string; enlace: string; alerta: boolean }) {
-  return (
-    <Link
-      to={enlace}
-      className={`rounded-xl border bg-white p-3 shadow-sm hover:border-emerald-300 ${alerta ? 'border-red-200' : 'border-slate-200'}`}
-    >
-      <p className={`text-2xl font-semibold tabular-nums ${alerta ? 'text-red-700' : 'text-slate-900'}`}>{valor}</p>
-      <p className="mt-1 text-xs text-slate-500">{etiqueta}</p>
-    </Link>
   )
 }
 
@@ -236,8 +227,16 @@ function Semaforo({ celdas }: { celdas: CeldaSemaforo[] }) {
 }
 
 export function Inicio() {
-  const { filtros } = useSesionActiva()
+  const { filtros, puedeVer, usuario } = useSesionActiva()
+  const filtrosContexto = useContext(ContextoMiga).filtros
+  const hoy = new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' }).replace(',', '')
   const { datos, cargando, error, recargar } = useDatos<Dashboard>('/dashboard', { ...filtros })
+  // Cada bloque solo si el usuario ve su módulo (la API además los manda vacíos)
+  const ve = {
+    reg: puedeVer('REGISTROS'), doc: puedeVer('DOCUMENTOS'), nc: puedeVer('NC'),
+    lab: puedeVer('LABORATORIO'), aud: puedeVer('AUDITORIAS'),
+    todo: usuario.permisos.some((p) => p === 'CERTIFICACIONES_ADMIN' || p === 'CERTIFICACIONES_VER'),
+  }
 
   if (cargando && !datos) return <Cargando variante="panel" />
   if (error && !datos) return <MensajeError error={error} onReintentar={recargar} />
@@ -246,42 +245,70 @@ export function Inicio() {
 
   return (
     <div className="space-y-5">
-      <EncabezadoPagina
-        titulo="Inicio"
-        descripcion={`Estado general${datos.temporada.nombre ? ` · temporada ${datos.temporada.nombre}` : ''}`}
-      />
+      <Hero
+        antetitulo={hoy}
+        titulo={`Hola, ${usuario.nombre.trim().split(/\s+/)[0]}`}
+        frase={`Estado general${datos.temporada.nombre ? ` · temporada ${datos.temporada.nombre}` : ''}`}
+        acciones={filtrosContexto}
+      >
+        {(ve.reg || ve.doc || ve.nc || ve.lab) && (
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 xl:grid-cols-8">
+            {ve.reg && <Indicador icono={ClipboardCheck} etiqueta="Registros por revisar" valor={String(k.registros_por_revisar)} enlace="/registros?seccion=registros" />}
+            {ve.reg && <Indicador icono={Clock} etiqueta="Registros atrasados (15+ días sin revisión)" valor={String(k.registros_atrasados)} enlace="/registros?seccion=registros" tono={k.registros_atrasados > 0 ? 'error' : 'neutro'} />}
+            {ve.doc && <Indicador icono={CalendarX} etiqueta="Vencidos" valor={String(k.vencidos)} enlace="/vencimientos" tono={k.vencidos > 0 ? 'error' : 'neutro'} />}
+            {ve.doc && <Indicador icono={CalendarClock} etiqueta="Vencen en ≤30 días" valor={String(k.vencen_30)} enlace="/vencimientos" tono={k.vencen_30 > 0 ? 'atencion' : 'neutro'} />}
+            {ve.nc && <Indicador icono={AlertTriangle} etiqueta="NC abiertas" valor={String(k.nc_abiertas)} enlace="/no-conformidades" />}
+            {ve.nc && <Indicador icono={RotateCcw} etiqueta="NC reincidentes (devueltas por certificaciones)" valor={String(k.nc_reincidentes)} enlace="/no-conformidades" tono={k.nc_reincidentes > 0 ? 'error' : 'neutro'} />}
+            {ve.nc && <Indicador icono={AlarmClockOff} etiqueta="NC con plazo vencido" valor={String(k.nc_vencidas)} enlace="/no-conformidades" tono={k.nc_vencidas > 0 ? 'error' : 'neutro'} />}
+            {ve.lab && (
+              <Indicador
+                icono={FlaskConical}
+                etiqueta="Análisis fuera de norma"
+                valor={`${k.analisis_fuera_norma} / ${k.analisis_total}`}
+                enlace="/laboratorio"
+                tono={k.analisis_fuera_norma > 0 ? 'error' : 'ok'}
+              />
+            )}
+          </div>
+        )}
+      </Hero>
       <MensajeError error={error} onReintentar={recargar} />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
-        <Kpi etiqueta="Registros por revisar" valor={String(k.registros_por_revisar)} enlace="/registros?seccion=registros" alerta={false} />
-        <Kpi etiqueta="Registros atrasados (15+ días sin revisión)" valor={String(k.registros_atrasados)} enlace="/registros?seccion=registros" alerta={k.registros_atrasados > 0} />
-        <Kpi etiqueta="Vencidos" valor={String(k.vencidos)} enlace="/vencimientos" alerta={k.vencidos > 0} />
-        <Kpi etiqueta="Vencen en ≤30 días" valor={String(k.vencen_30)} enlace="/vencimientos" alerta={false} />
-        <Kpi etiqueta="NC abiertas" valor={String(k.nc_abiertas)} enlace="/no-conformidades" alerta={false} />
-        <Kpi etiqueta="NC reincidentes (devueltas por certificaciones)" valor={String(k.nc_reincidentes)} enlace="/no-conformidades" alerta={k.nc_reincidentes > 0} />
-        <Kpi etiqueta="NC con plazo vencido" valor={String(k.nc_vencidas)} enlace="/no-conformidades" alerta={k.nc_vencidas > 0} />
-        <Kpi
-          etiqueta="Análisis fuera de norma"
-          valor={`${k.analisis_fuera_norma} / ${k.analisis_total}`}
-          enlace="/laboratorio"
-          alerta={k.analisis_fuera_norma > 0}
-        />
-      </div>
-
-      <Tarjeta titulo="Estado por protocolo y empresa">
-        <Semaforo celdas={datos.semaforo} />
-      </Tarjeta>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Tarjeta titulo="NC abiertas por responsable">
-          <Barras datos={datos.nc_por_responsable} />
+      {!(ve.reg || ve.doc || ve.nc || ve.lab || ve.aud) && (
+        <Tarjeta titulo="Tu acceso">
+          <p className="text-sm text-slate-600">
+            {puedeVer('AMBIENTE') ? (
+              <>
+                Registra los consumos de tus sucursales en{' '}
+                <Link to="/ambiente" className="font-semibold text-emerald-700 hover:underline">Medio ambiente</Link>.
+              </>
+            ) : (
+              'Aún no tienes módulos asignados. Pide acceso al equipo de certificaciones.'
+            )}
+          </p>
         </Tarjeta>
-        <Tarjeta titulo="NC abiertas por antigüedad">
-          <Barras datos={datos.nc_por_antiguedad} />
-        </Tarjeta>
-      </div>
+      )}
 
+      {ve.todo && (
+        <Tarjeta titulo="Estado por protocolo y empresa">
+          <Semaforo celdas={datos.semaforo} />
+        </Tarjeta>
+      )}
+
+      {ve.nc && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Tarjeta titulo="NC abiertas por responsable">
+            <Barras datos={datos.nc_por_responsable} />
+          </Tarjeta>
+          <Tarjeta titulo="NC abiertas por antigüedad">
+            <Barras datos={datos.nc_por_antiguedad} />
+          </Tarjeta>
+        </div>
+      )}
+
+      {(ve.nc || ve.doc || ve.lab) && (
       <div className="grid gap-4 lg:grid-cols-3">
+        {ve.nc && (
         <Tarjeta titulo="NC reincidentes abiertas">
           <ListaNc
             ncs={datos.nc_reincidentes}
@@ -289,7 +316,9 @@ export function Inicio() {
             detalle={(n) => `Reincidente ×${n.reincidencias}${n.ultima_revision?.observacion ? ` · ${n.ultima_revision.observacion}` : ''}`}
           />
         </Tarjeta>
+        )}
 
+        {ve.doc && (
         <Tarjeta titulo="Próximos vencimientos" acciones={<Link to="/vencimientos" className="inline-flex min-h-9 items-center rounded-lg px-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">Ver todos</Link>}>
           {datos.proximos_vencimientos.length ? (
             <ul className="divide-y divide-slate-100">
@@ -313,7 +342,9 @@ export function Inicio() {
             <p className="py-4 text-center text-sm text-slate-500">Nada vence en los próximos 60 días</p>
           )}
         </Tarjeta>
+        )}
 
+        {ve.lab && (
         <Tarjeta titulo="Análisis fuera de norma" acciones={<Link to="/laboratorio" className="inline-flex min-h-9 items-center rounded-lg px-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">Ver laboratorio</Link>}>
           {datos.analisis_fuera_norma.length ? (
             <ul className="divide-y divide-slate-100">
@@ -340,8 +371,11 @@ export function Inicio() {
             <p className="py-4 text-center text-sm text-slate-500">Sin análisis fuera de norma</p>
           )}
         </Tarjeta>
+        )}
       </div>
+      )}
 
+      {ve.aud && (
       <Tarjeta titulo="Cobertura del programa de auditorías internas">
         {datos.cobertura.length ? (
           <ul className="space-y-4">
@@ -372,6 +406,7 @@ export function Inicio() {
           <Insignia tono="gris">Pendiente</Insignia>
         </div>
       </Tarjeta>
+      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
-<h1 align="center">Certificaciones VS y LH — Frontend</h1>
+<h1 align="center">Certificaciones LH y VS — Frontend</h1>
 
 <p align="center">
-  Aplicación web del Área de Certificaciones de <strong>Agrícola Viento Sur</strong> y <strong>Agrícola La Hornilla</strong>.
+  Aplicación web del Área de Certificaciones de <strong>Agrícola La Hornilla</strong> y <strong>Agrícola Viento Sur</strong>.
   <br/>
   Reemplaza planillas, carpetas compartidas y correos por una plataforma única, usable desde el computador y el celular, e instalable como app.
 </p>
@@ -55,11 +55,13 @@ Esta aplicación los reúne en un solo lugar:
 - Checklist oficiales de cada norma, con todas sus versiones disponibles al planificar
 - Respuesta punto por punto (sí, no, N/A) con comentario y área
 - Cada "No" genera una no conformidad: análisis de causa (5 porqués), acciones, evidencia con foto, revisión y cierre, con detección de reincidencias
+- Auditorías externas (solo equipo de certificaciones): se suben los informes de la certificadora y se ve su resumen, con versiones y descarga en PDF o Word
 
 ### 🧪 Laboratorio
 - Análisis de agua, suelo, hoja, fruta y residuos, comparados con sus límites
 - Lectura del informe del laboratorio para completar los valores
-- Vista por campo o por planta
+- Vista por campo o por packing
+- Residuos y destinos (MRL), subsección propia del menú: el informe de residuos se compara con los límites de ASOEX de los países elegidos y muestra a cuáles se puede enviar la fruta
 
 ### 🌿 Medio ambiente
 - Consumos de combustibles, electricidad y fertilizantes, y reciclaje por material
@@ -69,6 +71,7 @@ Esta aplicación los reúne en un solo lugar:
 - Se instala en Android, iPhone y computador, y abre a pantalla completa
 - En el celular instalado, navegación con pestañas abajo
 - Abre sin señal con lo último cargado y avisa cuando no hay conexión
+- Avisa cuando hay una versión nueva publicada y se actualiza con un toque; en la app instalada también se estira hacia abajo para recargar, y en "Más" se buscan actualizaciones
 
 ### 🎨 UX / Interfaz
 - Identidad visual del portal La Hornilla
@@ -104,7 +107,8 @@ src/
 ├── componentes/
 │   ├── Layout.tsx              # Encabezado y menú
 │   ├── ui.tsx                  # Botones, tarjetas, ventanas, campos y avisos
-│   ├── Desplegable.tsx         # Listas desplegables
+│   ├── Desplegable.tsx         # Listas desplegables (en el celular, como hoja inferior)
+│   ├── Hoja.tsx                # Hoja inferior del celular: se arrastra para cerrar
 │   ├── Carrusel.tsx            # Fotos del ingreso (originales en fotos-carrusel/, versiones en src/assets/carrusel/)
 │   ├── Esqueletos.tsx          # Pantallas de carga
 │   ├── graficos.tsx            # Gráficos de medio ambiente
@@ -113,13 +117,13 @@ src/
 │   ├── nc.tsx                  # Piezas de no conformidades
 │   └── BarraFiltros.tsx
 ├── pwa/
-│   └── PWA.tsx                 # Instalación, conexión y pestañas del celular
+│   └── PWA.tsx                 # Instalación, conexión, actualización y pestañas del celular
 ├── paginas/                    # Una pantalla por módulo
 │   ├── Inicio.tsx · Ingreso.tsx
 │   ├── Registros.tsx · RegistroDetalle.tsx · Documentos.tsx · Vencimientos.tsx
-│   ├── Auditorias.tsx · AuditoriaDetalle.tsx · NoConformidades.tsx · NoConformidadDetalle.tsx
-│   ├── Laboratorio.tsx · Ambiente.tsx · AmbienteComparativa.tsx
-│   └── Importar.tsx · Bitacora.tsx · Configuracion.tsx
+│   ├── Auditorias.tsx · AuditoriaDetalle.tsx · AuditoriasExternas.tsx · NoConformidades.tsx · NoConformidadDetalle.tsx
+│   ├── Laboratorio.tsx · LaboratorioResiduos.tsx · Ambiente.tsx · AmbienteComparativa.tsx
+│   └── Importar.tsx · Historial.tsx · Configuracion.tsx
 └── hooks.ts · formato.ts · tipos.ts
 public/
 ├── manifest.webmanifest · sw.js   # App instalable

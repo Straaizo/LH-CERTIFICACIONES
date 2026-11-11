@@ -65,7 +65,7 @@ export interface FormatoPlantilla {
 }
 
 export interface Plantilla {
-  id: number
+  id: string
   codigo: string | null
   version: string
   nombre: string
@@ -78,13 +78,13 @@ export interface Plantilla {
 }
 
 export interface Registro {
-  id: number
+  id: string
   titulo: string
   estado: EstadoRegistro
   observacion: string | null
   codigo: string | null
   version: string | null
-  plantilla: { id: number; nombre: string }
+  plantilla: { id: string; nombre: string }
   unidad: UnidadRef
   temporada_id: number | null
   responsable: { id: string; nombre: string } | null
@@ -134,13 +134,13 @@ export const OPCIONES_CHECKLIST: OpcionChecklist[] = ['si', 'no', 'na']
 export type AccionEvento = 'crear' | 'guardar' | 'enviar' | 'aprobar' | 'rechazar' | 'llenar'
 
 export interface EventoRegistro {
-  id: number
+  id: string
   fecha_hora: string
   usuario: string
   accion: AccionEvento
   detalle: { cambios?: string[]; avance?: number; observacion?: string | null }
-  registro_id: number
-  registro?: { id: number; titulo: string; codigo: string | null; unidad: string; estado: EstadoRegistro }
+  registro_id: string
+  registro?: { id: string; titulo: string; codigo: string | null; unidad: string; estado: EstadoRegistro }
 }
 
 export const VERBO_ACCION: Record<AccionEvento, string> = {
@@ -196,20 +196,21 @@ const nombrePlantilla = (p: Pick<Plantilla, 'codigo' | 'nombre'>) => (p.codigo ?
 type Seccion = 'documentos' | 'registros' | 'plantillas'
 
 export function Registros() {
-  const { esCertificaciones } = useSesionActiva()
+  const { esCertificaciones, puedeVer } = useSesionActiva()
   const [parametros, setParametros] = useSearchParams()
   const pedida = parametros.get('seccion')
-  const seccion: Seccion = parametros.get('doc')
-    ? 'documentos'
-    : pedida === 'registros' || (pedida === 'plantillas' && esCertificaciones)
-      ? pedida
-      : 'documentos'
-
+  // Cada pestaña según su módulo: documentos fijos (DOCUMENTOS) y registros (REGISTROS)
   const opciones: { valor: Seccion; etiqueta: string }[] = [
-    { valor: 'documentos', etiqueta: 'Documentos fijos' },
-    { valor: 'registros', etiqueta: 'Registros' },
+    ...(puedeVer('DOCUMENTOS') ? [{ valor: 'documentos' as const, etiqueta: 'Documentos fijos' }] : []),
+    ...(puedeVer('REGISTROS') ? [{ valor: 'registros' as const, etiqueta: 'Registros' }] : []),
     ...(esCertificaciones ? [{ valor: 'plantillas' as const, etiqueta: 'Plantillas' }] : []),
   ]
+  const visibles = new Set(opciones.map((o) => o.valor))
+  const seccion: Seccion = parametros.get('doc') && visibles.has('documentos')
+    ? 'documentos'
+    : pedida && visibles.has(pedida as Seccion)
+      ? (pedida as Seccion)
+      : opciones[0]?.valor ?? 'registros'
 
   return (
     <div>
@@ -252,10 +253,10 @@ function ListaRegistros() {
     { estado: 'atrasado', texto: 'Atrasados (15+ días)', clase: 'text-red-700' },
   ]
 
-  const abrir = (id: number) => navigate(`/registros/r/${id}`)
+  const abrir = (id: string) => navigate(`/registros/r/${id}`)
   const descarga = useAccion()
-  const [descargandoId, setDescargandoId] = useState<number | null>(null)
-  const descargarWord = async (id: number) => {
+  const [descargandoId, setDescargandoId] = useState<string | null>(null)
+  const descargarWord = async (id: string) => {
     setDescargandoId(id)
     await descarga.ejecutar(() => descargarArchivo(`/registros/${id}/exportar`, { formato: 'docx' }, 'registro.docx'))
     setDescargandoId(null)
@@ -529,7 +530,7 @@ function NuevoRegistro({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
     const r: { creado?: Registro } = {}
     const ok = await accion.ejecutar(async () => {
       r.creado = await api.post<Registro>('/registros', {
-        plantilla_id: Number(plantillaId),
+        plantilla_id: plantillaId,
         unidad_id: Number(unidadId),
         titulo: titulo.trim(),
         responsable_id: responsableId || null,
@@ -1004,7 +1005,7 @@ function ConstructorPlantilla({ plantilla, onCerrar, onGuardada }: {
             <input maxLength={10} className={claseEntrada} value={version} onChange={(e) => setVersion(e.target.value)} />
           </Campo>
           <Campo etiqueta="Nombre" className="col-span-2">
-            <input required minLength={2} maxLength={200} className={claseEntrada} value={nombre} onChange={(e) => setNombre(e.target.value)} />
+            <input required minLength={2} maxLength={120} className={claseEntrada} value={nombre} onChange={(e) => setNombre(e.target.value)} />
           </Campo>
           <Campo etiqueta="Encargado" className="col-span-2">
             <input className={claseEntrada} value={formato.encargado} onChange={(e) => cambiarFormato({ encargado: e.target.value })} />

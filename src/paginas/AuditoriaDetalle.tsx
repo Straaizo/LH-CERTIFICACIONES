@@ -61,7 +61,7 @@ export function AuditoriaDetalle() {
   const { id } = useParams()
   const { esCertificaciones } = useSesionActiva()
   const { datos, cargando, error, recargar, setDatos } = useDatos<Detalle>(`/auditorias/${id}`)
-  const { datos: codigos } = useDatos<Record<string, number>>('/documentos/codigos')
+  const { datos: codigos } = useDatos<Record<string, string>>('/documentos/codigos')
   const [parametros, setParametros] = useSearchParams()
   const [filtro, setFiltro] = useState<FiltroItems>('todos')
   const [busqueda, setBusqueda] = useState('')
@@ -110,7 +110,7 @@ export function AuditoriaDetalle() {
   const r = datos.resumen
   const actual = datos.clausulas.find((c) => c.codigo === clausula) ?? null
 
-  const actualizarItem = (requisitoId: number, cambios: Partial<ItemChecklist>, resumen: ResumenAuditoria) => {
+  const actualizarItem = (requisitoId: string, cambios: Partial<ItemChecklist>, resumen: ResumenAuditoria) => {
     setDatos((prev) => {
       if (!prev) return prev
       const anterior = prev.items.find((i) => i.requisito.id === requisitoId)
@@ -271,7 +271,7 @@ export function AuditoriaDetalle() {
             <div className="flex gap-2 pb-1">
               <button
                 onClick={() => elegirClausula(null)}
-                className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium ${
+                className={`min-h-10 shrink-0 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium lg:min-h-0 lg:py-1.5 ${
                   clausula === null ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-slate-300 bg-white text-slate-700'
                 }`}
               >
@@ -282,7 +282,7 @@ export function AuditoriaDetalle() {
                   key={c.codigo}
                   onClick={() => elegirClausula(c.codigo)}
                   title={c.titulo || undefined}
-                  className={`relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium ${
+                  className={`relative flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium lg:min-h-0 lg:py-1.5 ${
                     clausula === c.codigo ? 'ring-2 ring-emerald-700 ring-offset-1' : ''
                   } ${claseAvance(c)}`}
                 >
@@ -388,7 +388,7 @@ export function AuditoriaDetalle() {
 }
 
 function ModalDescarga({ auditoriaId, clausulas, actual, onCerrar }: {
-  auditoriaId: number
+  auditoriaId: string
   clausulas: AvanceClausula[]
   actual: string | null
   onCerrar: () => void
@@ -477,7 +477,7 @@ function ModalDescarga({ auditoriaId, clausulas, actual, onCerrar }: {
 }
 
 function ModalEmitir({ auditoriaId, noConformidades, onCerrar, onEmitida }: {
-  auditoriaId: number
+  auditoriaId: string
   noConformidades: number
   onCerrar: () => void
   onEmitida: (mensaje: string) => void
@@ -531,11 +531,11 @@ function Contador({ etiqueta, valor, clase }: { etiqueta: string; valor: number;
 }
 
 function FilaRequisito({ auditoriaId, item, editable, codigos, onGuardado }: {
-  auditoriaId: number
+  auditoriaId: string
   item: ItemChecklist
   editable: boolean
-  codigos: Record<string, number>
-  onGuardado: (requisitoId: number, cambios: Partial<ItemChecklist>, resumen: ResumenAuditoria) => void
+  codigos: Record<string, string>
+  onGuardado: (requisitoId: string, cambios: Partial<ItemChecklist>, resumen: ResumenAuditoria) => void
 }) {
   const [verMas, setVerMas] = useState(false)
   const [editando, setEditando] = useState(false)
@@ -584,13 +584,13 @@ function FilaRequisito({ auditoriaId, item, editable, codigos, onGuardado }: {
     <article className={`p-3 ${item.advertencia ? 'bg-amber-50/50' : ''}`}>
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-sm font-semibold text-slate-800">{requisito.codigo}</span>
-        {requisito.nivel && (
+        {requisito.nivel && requisito.nivel !== 'sin_nivel' && (
           <Insignia tono={TONO_NIVEL[requisito.nivel] ?? 'gris'}>{ETIQUETA_NIVEL[requisito.nivel] ?? requisito.nivel}</Insignia>
         )}
         {item.no_conformidad && (
           <Link to={`/no-conformidades/${item.no_conformidad.id}`}>
             <Insignia tono="rojo" titulo={`Estado: ${item.no_conformidad.estado}`}>
-              NC #{item.no_conformidad.id}
+              NC #{item.no_conformidad.id.slice(0, 8)}
               {item.no_conformidad.reincidencias > 0 ? ` · Reincidente ×${item.no_conformidad.reincidencias}` : ''}
             </Insignia>
           </Link>

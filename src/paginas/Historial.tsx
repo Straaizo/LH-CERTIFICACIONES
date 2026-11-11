@@ -4,13 +4,13 @@ import { fechaYHora } from '../formato'
 import { Campo, Cargando, EncabezadoPagina, MensajeError, Tarjeta, Vacio, claseEntrada } from '../componentes/ui'
 import { Selector } from '../componentes/Desplegable'
 
-interface RegistroBitacora {
-  id: number
+interface CambioHistorial {
+  id: string
   fecha_hora: string
   usuario: string
   accion: string
   entidad: string
-  entidad_id: number | null
+  entidad_id: string | null
   detalle: unknown
 }
 
@@ -30,8 +30,8 @@ function detalleLegible(detalle: unknown): string {
     .join(' · ')
 }
 
-export function Bitacora() {
-  const { datos, cargando, error, recargar } = useDatos<RegistroBitacora[]>('/bitacora', { limite: 300 })
+export function Historial() {
+  const { datos, cargando, error, recargar } = useDatos<CambioHistorial[]>('/historial', { limite: 300 })
   const [entidad, setEntidad] = useState('')
   const [busqueda, setBusqueda] = useState('')
 
@@ -50,7 +50,7 @@ export function Bitacora() {
 
   return (
     <div className="space-y-4">
-      <EncabezadoPagina sinFiltros titulo="Bitácora" descripcion="Últimos 300 cambios de datos de negocio (usuario, fecha y hora)" />
+      <EncabezadoPagina sinFiltros titulo="Historial de cambios" descripcion="Últimos 300 cambios de datos de negocio (usuario, fecha y hora)" />
       <div className="grid gap-3 sm:grid-cols-2 lg:max-w-2xl">
         <Campo etiqueta="Entidad">
           <Selector className={claseEntrada} value={entidad} onChange={(e) => setEntidad(e.target.value)}>
@@ -101,7 +101,7 @@ export function Bitacora() {
                       <td className="px-3 py-2 text-slate-700">{r.accion}</td>
                       <td className="whitespace-nowrap px-3 py-2 text-slate-700">
                         {r.entidad}
-                        {r.entidad_id !== null && ` #${r.entidad_id}`}
+                        {r.entidad_id !== null && ` #${r.entidad_id.slice(0, 8)}`}
                       </td>
                       <td className="break-words px-3 py-2 text-xs text-slate-600">{r.detalleTexto || '—'}</td>
                     </tr>
@@ -115,7 +115,7 @@ export function Bitacora() {
                   <p className="text-xs tabular-nums text-slate-500">{fechaYHora(r.fecha_hora)}</p>
                   <p className="text-sm text-slate-800">
                     <span className="font-medium">{r.usuario}</span> · {r.accion} · {r.entidad}
-                    {r.entidad_id !== null && ` #${r.entidad_id}`}
+                    {r.entidad_id !== null && ` #${r.entidad_id.slice(0, 8)}`}
                   </p>
                   {r.detalleTexto && <p className="break-words text-xs text-slate-600">{r.detalleTexto}</p>}
                 </li>
