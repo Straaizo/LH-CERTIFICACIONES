@@ -7,7 +7,7 @@ firebase-debug.log
 
 # Variables de entorno y credenciales
 .env*
-!.env.example
+# Plantillas de variables: tampoco se publican (solo locales)
 *.pem
 *.key
 credenciales*.json
