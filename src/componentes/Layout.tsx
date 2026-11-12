@@ -11,7 +11,8 @@ import { useSesionActiva } from '../contexto/Sesion'
 import type { Usuario } from '../tipos'
 import { BarraContexto, SelectoresSucursal } from './BarraFiltros'
 import { Desplegable } from './Desplegable'
-import { Hoja, RESORTE, useEsMovil } from './Hoja'
+import { Hoja, LIVIANO, RESORTE, useEsMovil } from './Hoja'
+import { useLiviano } from '../rendimiento'
 import { ContextoMiga, Cargando } from './ui'
 import { FondoOrganico } from './Escena'
 import {
@@ -381,6 +382,7 @@ function CajonMovil({ abierto, onCerrar, fondo, children }: {
   fondo: string
   children: React.ReactNode
 }) {
+  const liviano = useLiviano()
   useEffect(() => {
     if (!abierto) return
     const tecla = (e: KeyboardEvent) => e.key === 'Escape' && onCerrar()
@@ -407,10 +409,10 @@ function CajonMovil({ abierto, onCerrar, fondo, children }: {
           {/* Transform completo: el deslizamiento corre en el compositor; el arrastre para cerrar va en el panel */}
           <motion.div
             className="absolute inset-y-0 left-0 w-[min(20rem,86vw)]"
-            initial={{ transform: 'translateX(-100%)' }}
-            animate={{ transform: 'translateX(0%)', transitionEnd: { transform: 'none' } }}
-            exit={{ transform: 'translateX(-100%)' }}
-            transition={RESORTE}
+            initial={liviano ? { transform: 'translateX(-24px)', opacity: 0 } : { transform: 'translateX(-100%)' }}
+            animate={{ transform: 'translateX(0%)', opacity: 1, transitionEnd: { transform: 'none' } }}
+            exit={liviano ? { transform: 'translateX(-24px)', opacity: 0 } : { transform: 'translateX(-100%)' }}
+            transition={liviano ? LIVIANO : RESORTE}
           >
           <motion.aside
             role="dialog"

@@ -6,6 +6,7 @@ import './index.css'
 import { App } from './App'
 import { ProveedorSesion } from './contexto/Sesion'
 import { ProveedorPWA } from './pwa/PWA'
+import { ProveedorRendimiento } from './rendimiento'
 
 // Android: su GPU sufre con los desenfoques de fondo; index.css los cambia por un tono equivalente (.gpu-modesta)
 if (/android/i.test(navigator.userAgent)) document.documentElement.classList.add('gpu-modesta')
@@ -23,11 +24,13 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       {/* Animaciones: se reducen si el teléfono tiene activado "reducir movimiento" */}
       <MotionConfig reducedMotion="user">
-        <ProveedorPWA>
-          <ProveedorSesion>
-            <App />
-          </ProveedorSesion>
-        </ProveedorPWA>
+        <ProveedorRendimiento>
+          <ProveedorPWA>
+            <ProveedorSesion>
+              <App />
+            </ProveedorSesion>
+          </ProveedorPWA>
+        </ProveedorRendimiento>
       </MotionConfig>
     </BrowserRouter>
   </StrictMode>,

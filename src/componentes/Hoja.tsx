@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useDragControls, type PanInfo } from 'motion/react'
 import { X } from 'lucide-react'
+import { useLiviano } from '../rendimiento'
 
 /** true en pantallas chicas (por defecto, bajo 1024 px: donde la app usa la navegación de celular). */
 export function useEsMovil(consulta = '(max-width: 1023px)'): boolean {
@@ -17,6 +18,8 @@ export function useEsMovil(consulta = '(max-width: 1023px)'): boolean {
 
 // Firme y corto: la hoja llega en ~0,3 s sin rebote perceptible
 export const RESORTE = { type: 'spring', damping: 38, stiffness: 520, mass: 0.8 } as const
+// Modo liviano (rendimiento.tsx): corto y sin resorte
+export const LIVIANO = { duration: 0.2, ease: [0.2, 0.8, 0.2, 1] } as const
 
 // Hojas abiertas, de la más antigua a la más nueva: Escape cierra solo la de arriba
 const pila: string[] = []
@@ -64,6 +67,8 @@ export function Hoja({ abierta, onCerrar, titulo, subtitulo, children, pie, cerr
   const [lista, setLista] = useState(false)
   const [oculta, setOculta] = useState(true)
   const [animando, setAnimando] = useState(false)
+  // Teléfono limitado a ~30 fps (ahorro de batería): recorrido corto con desvanecimiento, que a ese ritmo se ve fluido
+  const liviano = useLiviano()
 
   // Destino de la animación, calculado en el mismo render en que se pide abrir: sin vueltas extra de React
   const visible = abierta && lista
@@ -149,9 +154,9 @@ export function Hoja({ abierta, onCerrar, titulo, subtitulo, children, pie, cerr
         initial={false}
         style={{ willChange: animando ? 'transform' : 'auto' }}
         animate={visible
-          ? { transform: 'translateY(0%)', transitionEnd: { transform: 'none' } }
-          : { transform: 'translateY(100%)' }}
-        transition={RESORTE}
+          ? { transform: liviano ? 'translateY(0px)' : 'translateY(0%)', opacity: 1, transitionEnd: { transform: 'none' } }
+          : liviano ? { transform: 'translateY(24px)', opacity: 0 } : { transform: 'translateY(100%)', opacity: 1 }}
+        transition={liviano ? LIVIANO : RESORTE}
         onAnimationStart={() => setAnimando(true)}
         onAnimationComplete={alTerminar}
       >

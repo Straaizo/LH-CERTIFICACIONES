@@ -325,3 +325,8 @@
   50%, 80% { transform: rotate(0deg); }
   100% { transform: rotate(-90deg); }
 }
+
+/* Modo liviano (src/rendimiento.tsx): el teléfono limita a ~30 fps; la página entra solo con desvanecimiento */
+html[data-liviano] .animar-pagina {
+  animation: desvanecer-rapido 0.2s ease-out backwards;
+}
