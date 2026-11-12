@@ -74,10 +74,15 @@ Esta aplicación los reúne en un solo lugar:
 - Avisa cuando hay una versión nueva publicada y se actualiza con un toque; en la app instalada también se estira hacia abajo para recargar, y en "Más" se buscan actualizaciones
 
 ### 🎨 UX / Interfaz
-- Identidad visual del portal La Hornilla
-- Diseño responsive, del celular al escritorio
+- Línea visual común de las aplicaciones La Hornilla: paleta, tipografía DM Sans y escena de inicio con indicadores
+- Diseño responsive, del celular al escritorio; en celulares y tablets se usa en vertical
 - Pantallas de carga con la forma del contenido y transiciones suaves
 - Permisos visibles: lo que un perfil no puede editar se muestra como "Solo lectura"
+
+### 🔐 Seguridad
+- Sesión con JWT y renovación automática
+- Lo que un perfil no puede ver no aparece en el menú, y la API lo valida igual en cada petición
+- Política de seguridad de contenido (CSP) estricta y cabeceras de seguridad en el hosting
 
 ---
 
@@ -106,10 +111,11 @@ src/
 │   └── Sesion.tsx              # Sesión (usuario o correo + clave), permisos por módulo, catálogos y filtros
 ├── componentes/
 │   ├── Layout.tsx              # Encabezado y menú
+│   ├── Escena.tsx              # Encabezado verde, frutas e indicadores (línea visual La Hornilla)
 │   ├── ui.tsx                  # Botones, tarjetas, ventanas, campos y avisos
 │   ├── Desplegable.tsx         # Listas desplegables (en el celular, como hoja inferior)
 │   ├── Hoja.tsx                # Hoja inferior del celular: se arrastra para cerrar
-│   ├── Carrusel.tsx            # Fotos del ingreso (originales en fotos-carrusel/, versiones en src/assets/carrusel/)
+│   ├── Carrusel.tsx            # Fotos del ingreso
 │   ├── Esqueletos.tsx          # Pantallas de carga
 │   ├── graficos.tsx            # Gráficos de medio ambiente
 │   ├── VersionNorma.tsx        # Puntos de control de una versión de norma
@@ -134,9 +140,7 @@ public/
 
 ## Backend
 
-Esta aplicación consume una API REST en **FastAPI**, desplegada en **Google Cloud Run**.
-
-➡️ Repositorio de la API: [API-LH-CERTIFICACIONES](https://github.com/Straaizo/API-LH-CERTIFICACIONES)
+Esta aplicación consume una API REST en **FastAPI** (Python), desplegada en **Google Cloud Run**.
 
 ---
 
