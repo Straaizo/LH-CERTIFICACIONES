@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AUTH_MODO, api, configurarAuth, guardarTokens, tokenAcceso, vaciarMemoria, type Tokens } from '../api'
+import { AUTH_MODO, EVENTO_SESION_TERMINADA, api, configurarAuth, guardarTokens, tokenAcceso, vaciarMemoria, type Tokens } from '../api'
 import type { Catalogos, Filtros, Modulo, Permiso, Usuario } from '../tipos'
 
 interface ValorSesion {
@@ -131,6 +131,20 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     else guardarTokens(null)
     setUsuario(null)
     setCatalogos(null)
+  }, [])
+
+  // Usuario desactivado, sin acceso a la app o sesión inválida: fuera de inmediato, al login y con el motivo
+  useEffect(() => {
+    const alTerminar = (e: Event) => {
+      vaciarMemoria()
+      if (AUTH_MODO === 'demo') guardarLocal(CLAVE_DEMO, null)
+      else guardarTokens(null)
+      setUsuario(null)
+      setCatalogos(null)
+      setError((e as CustomEvent<string>).detail)
+    }
+    window.addEventListener(EVENTO_SESION_TERMINADA, alTerminar)
+    return () => window.removeEventListener(EVENTO_SESION_TERMINADA, alTerminar)
   }, [])
 
   const puede = useCallback(

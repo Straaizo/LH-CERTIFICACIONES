@@ -166,6 +166,18 @@ export function vaciarMemoria(): void {
   memoria.clear()
 }
 
+// ---------- Sesión terminada por la API ----------
+// Si el portal desactiva al usuario, le quita el acceso a la app o la sesión ya no es válida, la API lo rechaza en la
+// siguiente petición. La app avisa con este evento y Sesion.tsx lo saca al login de inmediato con el motivo.
+export const EVENTO_SESION_TERMINADA = 'certificaciones:sesion-terminada'
+
+function motivoFinSesion(estado: number, mensaje: string): string | null {
+  if (estado === 403 && /inactivo/i.test(mensaje)) return 'Tu usuario fue desactivado. Si crees que es un error, contacta a soporte TI.'
+  if (estado === 403 && /no tienes acceso a esta aplicaci/i.test(mensaje)) return 'Ya no tienes acceso a esta aplicación. Pide acceso al equipo de certificaciones.'
+  if (estado === 401 && AUTH_MODO === 'jwt') return 'Tu sesión venció. Vuelve a ingresar.'
+  return null
+}
+
 async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown, params?: Params, reintento = true): Promise<T> {
   if (metodo !== 'GET') vaciarMemoria()
   const esForm = cuerpo instanceof FormData
@@ -201,6 +213,9 @@ async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown, params?:
     } catch {
       /* respuesta sin JSON */
     }
+    // Fuera del inicio de sesión (ahí el mensaje se muestra en el formulario)
+    const motivo = ruta.startsWith('/auth/') ? null : motivoFinSesion(respuesta.status, mensaje)
+    if (motivo) window.dispatchEvent(new CustomEvent(EVENTO_SESION_TERMINADA, { detail: motivo }))
     throw new ErrorApi(respuesta.status, mensaje, repetido)
   }
   if (respuesta.status === 204) return undefined as T
