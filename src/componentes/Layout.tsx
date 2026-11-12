@@ -451,6 +451,17 @@ function CajonMovil({ abierto, onCerrar, fondo, children }: {
 
 /** Celular como app: todo lo que no cabe en las pestañas (secciones, filtros, cuenta), en una hoja inferior. */
 function HojaMas({ abierta, onCerrar }: { abierta: boolean; onCerrar: () => void }) {
+  return (
+    <Hoja abierta={abierta} onCerrar={onCerrar} titulo="Más" pie={PIE_SALIR} premontar>
+      <ContenidoMas />
+    </Hoja>
+  )
+}
+
+// Elementos fijos y contenido memoizado: abrir o cerrar la hoja solo la mueve, sin volver a dibujar lo de adentro
+const PIE_SALIR = <BotonSalir />
+
+const ContenidoMas = memo(function ContenidoMas() {
   const grupos = useGrupos()
   const { pathname } = useLocation()
   const { esCertificaciones, puedeVer } = useSesionActiva()
@@ -462,7 +473,6 @@ function HojaMas({ abierta, onCerrar }: { abierta: boolean; onCerrar: () => void
     .filter((e) => !enPestanas.has(e.a))
 
   return (
-    <Hoja abierta={abierta} onCerrar={onCerrar} titulo="Más" pie={<BotonSalir />}>
       <div className="space-y-6 px-2 pt-1">
         <TarjetaCuenta />
         <section>
@@ -493,9 +503,17 @@ function HojaMas({ abierta, onCerrar }: { abierta: boolean; onCerrar: () => void
         </section>
         <AccionesApp />
       </div>
-    </Hoja>
   )
-}
+})
+
+const ContenidoCuenta = memo(function ContenidoCuenta() {
+  return (
+    <div className="space-y-6 px-2 pt-1">
+      <TarjetaCuenta />
+      <AccionesApp />
+    </div>
+  )
+})
 
 function TituloSeccion({ children }: { children: React.ReactNode }) {
   return <h3 className="mb-2 px-1 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">{children}</h3>
@@ -668,11 +686,8 @@ function MenuUsuario() {
       </button>
 
       {movil ? (
-        <Hoja abierta={abierto} onCerrar={cerrar} titulo="Tu cuenta" pie={<BotonSalir />}>
-          <div className="space-y-6 px-2 pt-1">
-            <TarjetaCuenta />
-            <AccionesApp />
-          </div>
+        <Hoja abierta={abierto} onCerrar={cerrar} titulo="Tu cuenta" pie={PIE_SALIR} premontar>
+          <ContenidoCuenta />
         </Hoja>
       ) : (
         <AnimatePresence>
