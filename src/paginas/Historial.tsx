@@ -111,7 +111,7 @@ export function Historial() {
             </div>
             <ul className="divide-y divide-slate-100 md:hidden">
               {filas.map((r) => (
-                <li key={r.id} className="py-2">
+                <li key={r.id} className="py-2 [content-visibility:auto] [contain-intrinsic-size:auto_72px]">
                   <p className="text-xs tabular-nums text-slate-500">{fechaYHora(r.fecha_hora)}</p>
                   <p className="text-sm text-slate-800">
                     <span className="font-medium">{r.usuario}</span> · {r.accion} · {r.entidad}

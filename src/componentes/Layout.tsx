@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, type PanInfo } from 'motion/react'
 import {
@@ -133,7 +133,7 @@ function Marca({ compacto = false }: { compacto?: boolean }) {
 }
 
 export function Layout() {
-  const { esCertificaciones } = useSesionActiva()
+  const { esCertificaciones, puedeVer } = useSesionActiva()
   const grupos = useGrupos()
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [masAbierto, setMasAbierto] = useState(false)
@@ -243,8 +243,9 @@ export function Layout() {
                   </button>
                   <AnimatePresence initial={false}>
                     {abierto && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="overflow-hidden">
+                      // Solo opacidad y desplazamiento (los hace la tarjeta gráfica); animar la altura recalculaba la página cada cuadro
+                      <motion.div initial={{ opacity: 0, transform: 'translateY(-4px)' }} animate={{ opacity: 1, transform: 'translateY(0px)' }}
+                        exit={{ opacity: 0, transition: { duration: 0.1 } }} transition={{ duration: 0.18, ease: 'easeOut' }}>
                         <div className="ml-[22px] mt-1 flex flex-col gap-0.5 border-l border-white/20 pl-3">
                           {hijos.map((h) => (
                             <NavLink key={h.a} to={h.a} end={h.exacto}
@@ -269,10 +270,15 @@ export function Layout() {
     </nav>
   )
 
+  // Memoizado: abrir el menú o la hoja "Más" cambia el estado del Layout, pero no la miga ni los filtros;
+  // con un objeto nuevo en cada render, todas las páginas que la leen se volverían a dibujar
+  const conFiltros = !!actual && pathname === actual.a
+  const valorMiga = useMemo(() => ({ miga, filtros: conFiltros ? <BarraContexto /> : null }), [miga, conFiltros])
+
   const fondoVerde = 'bg-emerald-700'
 
   return (
-    <ContextoMiga.Provider value={{ miga, filtros: actual && pathname === actual.a ? <BarraContexto /> : null }}>
+    <ContextoMiga.Provider value={valorMiga}>
       {/* Alto de la pantalla visible; como app instalada, el del documento (ver .modo-app en index.css) */}
       <div className="h-dvh overflow-hidden [@media(display-mode:standalone)]:h-full">
         {/* Menú lateral (escritorio) */}
@@ -339,15 +345,12 @@ export function Layout() {
             <main className="mx-auto max-w-[1440px] px-4 py-6 sm:px-8 sm:py-8">
               {/* La llave por ruta hace que cada página entre con una transición suave */}
               <div key={`${pathname}#${refrescos}`} className="animar-pagina">
-                {/* Si la pantalla todavía no se precargó, se muestra el esqueleto mientras llega */}
-                <Suspense fallback={<Cargando />}>
-                  <Outlet />
-                </Suspense>
+                <Pagina />
               </div>
             </main>
           </div>
           {pestanas && (
-            <BarraPestanas esCertificaciones={esCertificaciones} masAbierto={masAbierto} onMas={() => setMasAbierto(true)} />
+            <BarraPestanas esCertificaciones={esCertificaciones} puedeVer={puedeVer} masAbierto={masAbierto} onMas={() => setMasAbierto(true)} />
           )}
         </div>
       </div>
@@ -358,6 +361,19 @@ export function Layout() {
     </ContextoMiga.Provider>
   )
 }
+
+/**
+ * La página actual, aislada del Layout: abrir el menú, la hoja "Más" o el perfil cambia el estado del Layout y,
+ * sin esto, se volvía a dibujar la página completa justo al empezar la animación (el tirón en el celular).
+ * Se vuelve a dibujar solo cuando cambia la ruta. Si la pantalla aún no se precargó, muestra el esqueleto.
+ */
+const Pagina = memo(function Pagina() {
+  return (
+    <Suspense fallback={<Cargando />}>
+      <Outlet />
+    </Suspense>
+  )
+})
 
 function CajonMovil({ abierto, onCerrar, fondo, children }: {
   abierto: boolean
@@ -437,8 +453,8 @@ function CajonMovil({ abierto, onCerrar, fondo, children }: {
 function HojaMas({ abierta, onCerrar }: { abierta: boolean; onCerrar: () => void }) {
   const grupos = useGrupos()
   const { pathname } = useLocation()
-  const { esCertificaciones } = useSesionActiva()
-  const enPestanas = new Set(PESTANAS(esCertificaciones).map((p) => p.a))
+  const { esCertificaciones, puedeVer } = useSesionActiva()
+  const enPestanas = new Set(PESTANAS(esCertificaciones, puedeVer).map((p) => p.a))
   // Las subsecciones van como mosaicos propios (Residuos MRL, Auditorías externas)
   const secciones = grupos
     .flatMap((g) => g.enlaces.flatMap((e) => e.hijos ? e.hijos.map((h) => ({ a: h.a, texto: h.corto, icono: e.icono, exacto: h.exacto }))
@@ -494,12 +510,10 @@ function TarjetaCuenta() {
         {usuario.nombre.trim().charAt(0).toUpperCase()}
       </span>
       <div className="relative min-w-0 flex-1">
-        <p className="truncate font-semibold">{usuario.nombre}</p>
-        <p className="truncate text-sm text-white/75">{usuario.email}</p>
-        <p className="mt-1 font-mono text-[11px] uppercase tracking-wider text-emerald-200">
-          {ROLES[usuario.rol]}
-          {usuario.rol !== 'certificaciones' && usuario.unidades.length > 0 && ` · ${usuario.unidades.map((u) => u.nombre).join(', ')}`}
-        </p>
+        {/* Solo quién es: nombre, usuario y correo (rol y sucursales no aportan aquí) */}
+        <p className="truncate text-lg font-bold leading-tight">{usuario.nombre.trim()}</p>
+        <p className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-emerald-100">{usuario.usuario}</p>
+        <p className="mt-0.5 truncate text-sm lowercase text-white/75">{usuario.email}</p>
       </div>
     </div>
   )
@@ -671,12 +685,9 @@ function MenuUsuario() {
               className="absolute right-0 top-full mt-2 w-72 origin-top-right overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-xl"
             >
               <div className="border-b border-slate-100 px-4 py-3">
-                <p className="font-semibold">{usuario.nombre}</p>
-                <p className="text-sm text-slate-500">{usuario.email}</p>
-                <p className="mt-1 font-mono text-[11px] uppercase tracking-wider text-emerald-700">{ROLES[usuario.rol]}</p>
-                {usuario.rol === 'encargado' && (
-                  <p className="mt-1 text-xs text-slate-500">{usuario.unidades.map((u) => u.nombre).join(', ')}</p>
-                )}
+                <p className="truncate text-base font-bold">{usuario.nombre.trim()}</p>
+                <p className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">{usuario.usuario}</p>
+                <p className="truncate text-sm lowercase text-slate-500">{usuario.email}</p>
               </div>
               {!instalada && (puedeInstalar || esIOS) && (
                 <button

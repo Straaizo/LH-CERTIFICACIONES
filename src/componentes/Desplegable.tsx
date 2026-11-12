@@ -141,11 +141,17 @@ function PanelFlotante({ titulo, ancla, alinear, ancho, ...lista }: PropsPanel) 
       setPos({ top: haciaArriba ? a.top - separacion - altoFinal : a.bottom + separacion, left, minWidth: a.width, alto: disponible })
     }
     calcular()
-    window.addEventListener('resize', calcular)
-    window.addEventListener('scroll', calcular, true)
+    // Al desplazar se mide como máximo una vez por cuadro (antes, en cada evento de scroll)
+    let cuadro = 0
+    const programar = () => {
+      if (!cuadro) cuadro = requestAnimationFrame(() => { cuadro = 0; calcular() })
+    }
+    window.addEventListener('resize', programar)
+    window.addEventListener('scroll', programar, { capture: true, passive: true })
     return () => {
-      window.removeEventListener('resize', calcular)
-      window.removeEventListener('scroll', calcular, true)
+      cancelAnimationFrame(cuadro)
+      window.removeEventListener('resize', programar)
+      window.removeEventListener('scroll', programar, { capture: true })
     }
   }, [ancla, alinear])
 

@@ -37,6 +37,7 @@ function leer(clave: string): string | null {
 }
 
 export function guardarTokens(tokens: Tokens | null) {
+  vaciarMemoria()
   try {
     if (tokens) {
       localStorage.setItem(CLAVE_ACCESS, tokens.access_token)
@@ -136,7 +137,37 @@ function armarUrl(ruta: string, params?: Params): string {
   return url.toString()
 }
 
+// ---------- Memoria de lecturas (solo en esta pestaña, nunca en el teléfono) ----------
+// Al volver a una pantalla ya vista se muestra al instante lo último leído y se actualiza por detrás (useDatos).
+// Cualquier cambio (POST, PUT, PATCH, DELETE) y todo inicio o cierre de sesión la vacían: nunca se ve un dato
+// viejo después de guardar, ni datos de otra persona.
+const memoria = new Map<string, unknown>()
+let generacion = 0
+const MAXIMO_MEMORIA = 80
+
+export function leerMemoria<T>(clave: string): T | undefined {
+  return memoria.get(clave) as T | undefined
+}
+
+/** Guarda solo si nada se modificó desde que empezó la lectura (si no, el dato podría estar viejo). */
+export function guardarMemoria(clave: string, valor: unknown, generacionInicio: number): void {
+  if (generacionInicio !== generacion) return
+  memoria.delete(clave)
+  memoria.set(clave, valor)
+  if (memoria.size > MAXIMO_MEMORIA) memoria.delete(memoria.keys().next().value as string)
+}
+
+export function generacionMemoria(): number {
+  return generacion
+}
+
+export function vaciarMemoria(): void {
+  generacion++
+  memoria.clear()
+}
+
 async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown, params?: Params, reintento = true): Promise<T> {
+  if (metodo !== 'GET') vaciarMemoria()
   const esForm = cuerpo instanceof FormData
   let respuesta: Response
   try {

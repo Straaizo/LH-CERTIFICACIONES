@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { AUTH_MODO, api, configurarAuth, guardarTokens, tokenAcceso, type Tokens } from '../api'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { AUTH_MODO, api, configurarAuth, guardarTokens, tokenAcceso, vaciarMemoria, type Tokens } from '../api'
 import type { Catalogos, Filtros, Modulo, Permiso, Usuario } from '../tipos'
 
 interface ValorSesion {
@@ -112,54 +112,59 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     void iniciar()
   }, [cargarSesion])
 
-  const ingresarDemo = async (id: string) => {
+  const ingresarDemo = useCallback(async (id: string) => {
+    vaciarMemoria()
     guardarLocal(CLAVE_DEMO, id)
     setFiltros({})
     await cargarSesion()
-  }
+  }, [setFiltros, cargarSesion])
 
-  const ingresar = async (identificador: string, clave: string) => {
+  const ingresar = useCallback(async (identificador: string, clave: string) => {
     guardarTokens(await api.post<Tokens>('/auth/login', { usuario: identificador.trim(), clave }))
     setFiltros({})
     await cargarSesion()
-  }
+  }, [setFiltros, cargarSesion])
 
-  const salir = async () => {
+  const salir = useCallback(async () => {
+    vaciarMemoria()
     if (AUTH_MODO === 'demo') guardarLocal(CLAVE_DEMO, null)
     else guardarTokens(null)
     setUsuario(null)
     setCatalogos(null)
-  }
+  }, [])
 
   const puede = useCallback(
     (permiso: Permiso) => !!usuario && (usuario.rol === 'certificaciones' || usuario.permisos.includes(permiso)),
     [usuario],
   )
 
-  const recargarCatalogos = async () => {
+  const recargarCatalogos = useCallback(async () => {
     setCatalogos(await api.get<Catalogos>('/catalogos'))
-  }
+  }, [])
+
+  const puedeVer = useCallback((modulo: Modulo) => !!usuario?.modulos?.includes(modulo), [usuario])
+
+  // Memoizado: un objeto nuevo en cada render volvía a dibujar todos los componentes que usan la sesión
+  const valor = useMemo(() => ({
+    usuario,
+    catalogos,
+    cargando,
+    error,
+    filtros,
+    setFiltros,
+    ingresarDemo,
+    ingresar,
+    salir,
+    esCertificaciones: usuario?.rol === 'certificaciones',
+    veHistorial: !!usuario?.permisos.includes('CERTIFICACIONES_HISTORIAL'),
+    puedeVer,
+    puedeEscribir: !!usuario && usuario.rol !== 'lectura',
+    puede,
+    recargarCatalogos,
+  }), [usuario, catalogos, cargando, error, filtros, setFiltros, ingresarDemo, ingresar, salir, puedeVer, puede, recargarCatalogos])
 
   return (
-    <ContextoSesion.Provider
-      value={{
-        usuario,
-        catalogos,
-        cargando,
-        error,
-        filtros,
-        setFiltros,
-        ingresarDemo,
-        ingresar,
-        salir,
-        esCertificaciones: usuario?.rol === 'certificaciones',
-        veHistorial: !!usuario?.permisos.includes('CERTIFICACIONES_HISTORIAL'),
-        puedeVer: (modulo: Modulo) => !!usuario?.modulos?.includes(modulo),
-        puedeEscribir: !!usuario && usuario.rol !== 'lectura',
-        puede,
-        recargarCatalogos,
-      }}
-    >
+    <ContextoSesion.Provider value={valor}>
       {children}
     </ContextoSesion.Provider>
   )

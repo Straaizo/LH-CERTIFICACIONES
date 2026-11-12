@@ -322,7 +322,7 @@ function ListaRegistros() {
         <>
           <div className="space-y-3 md:hidden">
             {lista.map((r) => (
-              <div key={r.id} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div key={r.id} className="rounded-xl border border-slate-200 bg-white shadow-sm [content-visibility:auto] [contain-intrinsic-size:auto_120px]">
                 <button onClick={() => abrir(r.id)} className="block w-full rounded-xl p-4 text-left active:bg-slate-50">
                   <div className="flex flex-wrap items-baseline gap-x-2 text-xs text-slate-500">
                     <Codigo codigo={r.codigo} className="text-sm" />

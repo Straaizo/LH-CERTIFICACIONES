@@ -581,7 +581,7 @@ function FilaRequisito({ auditoriaId, item, editable, codigos, onGuardado }: {
   const resultadoComentario: Resultado = pendienteNo ? 'no' : item.resultado
 
   return (
-    <article className={`p-3 ${item.advertencia ? 'bg-amber-50/50' : ''}`}>
+    <article className={`p-3 [content-visibility:auto] [contain-intrinsic-size:auto_160px] ${item.advertencia ? 'bg-amber-50/50' : ''}`}>
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-sm font-semibold text-slate-800">{requisito.codigo}</span>
         {requisito.nivel && requisito.nivel !== 'sin_nivel' && (

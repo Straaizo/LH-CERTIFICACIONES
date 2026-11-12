@@ -15,7 +15,8 @@ export function useEsMovil(consulta = '(max-width: 1023px)'): boolean {
   return movil
 }
 
-export const RESORTE = { type: 'spring', damping: 34, stiffness: 380, mass: 0.9 } as const
+// Firme y corto: la hoja llega en ~0,3 s sin rebote perceptible
+export const RESORTE = { type: 'spring', damping: 38, stiffness: 520, mass: 0.8 } as const
 
 // Hojas abiertas, de la más antigua a la más nueva: Escape cierra solo la de arriba
 const pila: string[] = []
@@ -41,6 +42,14 @@ export function Hoja({ abierta, onCerrar, titulo, subtitulo, children, pie, cerr
   // Ref: un onCerrar nuevo en cada render no debe reiniciar la hoja (ni quitar el foco del campo que se escribe)
   const alCerrar = useRef(onCerrar)
   alCerrar.current = onCerrar
+  // El contenido se dibuja un cuadro después de que la hoja empieza a subir: el primer cuadro de la animación
+  // no espera a armar listas largas (en el celular era lo que se sentía como tirón al abrir)
+  const [contenido, setContenido] = useState(false)
+  useEffect(() => {
+    if (!abierta) return
+    const cuadro = requestAnimationFrame(() => setContenido(true))
+    return () => cancelAnimationFrame(cuadro)
+  }, [abierta])
 
   useEffect(() => {
     if (!abierta) return
@@ -67,11 +76,12 @@ export function Hoja({ abierta, onCerrar, titulo, subtitulo, children, pie, cerr
   }
 
   return createPortal(
-    <AnimatePresence>
+    // Al terminar de cerrar se vacía, para que la próxima apertura también parta liviana (y no se vacíe mientras baja)
+    <AnimatePresence onExitComplete={() => setContenido(false)}>
       {abierta && (
         <div className="fixed inset-0 z-[70]" data-panel>
           <motion.div
-            className="velo-hoja absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
+            className="velo-hoja absolute inset-0 bg-slate-950/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -130,7 +140,7 @@ export function Hoja({ abierta, onCerrar, titulo, subtitulo, children, pie, cerr
               )}
             </div>
             <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 ${pie ? 'pb-3' : 'pb-[max(1rem,env(safe-area-inset-bottom))]'}`}>
-              {children}
+              {contenido ? children : <div className="min-h-24" aria-hidden="true" />}
             </div>
             {pie && (
               <div className="shrink-0 border-t border-slate-200/70 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">{pie}</div>

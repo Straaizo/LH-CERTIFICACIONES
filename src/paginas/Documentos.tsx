@@ -146,7 +146,7 @@ export function Documentos({ embebido = false }: { embebido?: boolean }) {
                 <button
                   key={d.id}
                   onClick={() => abrirDetalle(d.id)}
-                  className="block w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm active:bg-slate-50"
+                  className="block w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm active:bg-slate-50 [content-visibility:auto] [contain-intrinsic-size:auto_110px]"
                 >
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Icono className="h-3.5 w-3.5" /> {SECCIONES[d.seccion].corta} · {d.categoria.nombre}

@@ -604,7 +604,7 @@ export function ComparativaTemporadas() {
               <span className="text-3xl font-bold tracking-tight text-slate-900">{avance}%</span>
             </div>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-white shadow-inner">
-              <div className="h-full rounded-full transition-[width] duration-500 ease-out" style={{ width: `${avance}%`, background: `linear-gradient(90deg, ${COLOR.actual}, #2f7553)` }} />
+              <div className="h-full origin-left rounded-full transition-transform duration-500 ease-out" style={{ transform: `scaleX(${avance / 100})`, background: `linear-gradient(90deg, ${COLOR.actual}, #2f7553)` }} />
             </div>
             <ol className="mt-6 space-y-3">
               {PASOS.map((p, i) => {
@@ -613,7 +613,7 @@ export function ComparativaTemporadas() {
                 return (
                   <li
                     key={p.titulo}
-                    className={`flex items-start gap-3 rounded-2xl border p-3 transition-all duration-300 animar-aparecer ${
+                    className={`flex items-start gap-3 rounded-2xl border p-3 transition-[background-color,border-color,opacity,box-shadow] duration-300 animar-aparecer ${
                       estado === 'activo' ? 'border-sky-200 bg-white shadow-sm' : estado === 'listo' ? 'border-transparent bg-white/60' : 'border-transparent opacity-50'
                     }`}
                     style={{ animationDelay: `${i * 90}ms` }}

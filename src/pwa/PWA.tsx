@@ -2,10 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { NavLink, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import {
-  AlertTriangle, ArrowDown, CheckCircle2, ClipboardCheck, Download, FileText, FlaskConical, LayoutDashboard, Menu, PlusSquare,
+  AlertTriangle, ArrowDown, CheckCircle2, ClipboardCheck, Download, FileText, FlaskConical, LayoutDashboard, Leaf, Menu, PlusSquare,
   RefreshCw, Share, Smartphone, Sparkles, Wifi, WifiOff, X, Zap, type LucideIcon,
 } from 'lucide-react'
 import { FondoOrganico } from '../componentes/Escena'
+import type { Modulo } from '../tipos'
 import { Boton } from '../componentes/ui'
 
 const CLAVE_SIMULADA = 'certificaciones.vistaApp'
@@ -199,11 +200,14 @@ export function ProveedorPWA({ children }: { children: ReactNode }) {
     else setGuiaAbierta(true)
   }, [evento, instalar])
 
-  const valor: EstadoPWA = {
+  const cerrarGuia = useCallback(() => setGuiaAbierta(false), [])
+  // Memoizado: solo se vuelven a dibujar los consumidores cuando cambia algo de la app (conexión, actualización...)
+  const valor = useMemo<EstadoPWA>(() => ({
     modoApp, instalada, simulada, setSimulada, puedeInstalar: !!evento, esIOS, instalar, enLinea,
-    pedirInstalacion, guiaAbierta, cerrarGuia: () => setGuiaAbierta(false),
+    pedirInstalacion, guiaAbierta, cerrarGuia,
     version: __VERSION_APP__, hayActualizacion, buscarActualizacion, actualizar,
-  }
+  }), [modoApp, instalada, simulada, setSimulada, evento, esIOS, instalar, enLinea, pedirInstalacion, guiaAbierta,
+    cerrarGuia, hayActualizacion, buscarActualizacion, actualizar])
   return (
     <ContextoPWA.Provider value={valor}>
       {children}
@@ -531,7 +535,11 @@ export function TirarParaRecargar() {
 
   useEffect(() => {
     // El contenido se desplaza dentro de .scroll-principal (Layout), no en la ventana
-    const arriba = () => (document.querySelector('.scroll-principal')?.scrollTop ?? window.scrollY) <= 0
+    let principal: Element | null = null
+    const arriba = () => {
+      if (!principal?.isConnected) principal = document.querySelector('.scroll-principal')
+      return (principal?.scrollTop ?? window.scrollY) <= 0
+    }
     const alTocar = (e: TouchEvent) => {
       const objetivo = e.target as Element | null
       const enCapa = objetivo?.closest('[role="dialog"], [data-hoja], [data-panel], input, textarea, select')
@@ -540,8 +548,10 @@ export function TirarParaRecargar() {
     const alMover = (e: TouchEvent) => {
       if (inicio.current === null) return
       const d = e.touches[0].clientY - inicio.current
-      ultima.current = d <= 0 || !arriba() ? 0 : Math.min(140, d * 0.5)
-      setDistancia(ultima.current)
+      const nueva = d <= 0 || !arriba() ? 0 : Math.round(Math.min(140, d * 0.5))
+      if (nueva === ultima.current) return
+      ultima.current = nueva
+      setDistancia(nueva)
     }
     const alSoltar = () => {
       if (inicio.current === null) return
@@ -595,26 +605,31 @@ export function usaPestanas(pathname: string, modoApp: boolean): boolean {
   return modoApp && !DETALLE.test(pathname)
 }
 
-/** Las 4 pestañas fijas; el resto de las secciones va en la hoja "Más". */
-export function PESTANAS(esCertificaciones: boolean): Pestana[] {
+/** Hasta 4 pestañas, solo de los módulos que el usuario puede ver; el resto va en la hoja "Más". */
+export function PESTANAS(esCertificaciones: boolean, puedeVer: (m: Modulo) => boolean): Pestana[] {
+  const tercera = esCertificaciones && puedeVer('AUDITORIAS')
+    ? { a: '/auditorias', texto: 'Auditorías', icono: ClipboardCheck }
+    : puedeVer('LABORATORIO') ? { a: '/laboratorio', texto: 'Laboratorio', icono: FlaskConical }
+      : puedeVer('AUDITORIAS') ? { a: '/auditorias', texto: 'Auditorías', icono: ClipboardCheck }
+        : puedeVer('AMBIENTE') ? { a: '/ambiente', texto: 'Ambiente', icono: Leaf } : null
   return [
     { a: '/', texto: 'Inicio', icono: LayoutDashboard },
-    { a: '/registros', texto: 'Registros', icono: FileText },
-    esCertificaciones
-      ? { a: '/auditorias', texto: 'Auditorías', icono: ClipboardCheck }
-      : { a: '/laboratorio', texto: 'Laboratorio', icono: FlaskConical },
-    { a: '/no-conformidades', texto: 'NC', icono: AlertTriangle },
+    ...(puedeVer('REGISTROS') || puedeVer('DOCUMENTOS') ? [{ a: '/registros', texto: 'Registros', icono: FileText }] : []),
+    ...(tercera ? [tercera] : []),
+    ...(puedeVer('NC') ? [{ a: '/no-conformidades', texto: 'NC', icono: AlertTriangle }] : []),
   ]
 }
 
-export function BarraPestanas({ esCertificaciones, masAbierto, onMas }: {
+export function BarraPestanas({ esCertificaciones, puedeVer, masAbierto, onMas }: {
   esCertificaciones: boolean
+  puedeVer: (m: Modulo) => boolean
   masAbierto: boolean
   onMas: () => void
 }) {
   const ref = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
-  const pestanas = PESTANAS(esCertificaciones)
+  const pestanas = PESTANAS(esCertificaciones, puedeVer)
+  const columnas = pestanas.length + 1
   const activaRuta = pestanas.find((p) => (p.a === '/' ? pathname === '/' : pathname === p.a || pathname.startsWith(`${p.a}/`)))?.a
   // Con la hoja "Más" abierta (o en una sección que no está en las pestañas), la activa es "Más"
   const activa = masAbierto || !activaRuta ? 'mas' : activaRuta
@@ -650,11 +665,11 @@ export function BarraPestanas({ esCertificaciones, masAbierto, onMas }: {
       aria-label="Navegación principal"
       className="shrink-0 bg-fondo px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 lg:hidden"
     >
-      <ul className="relative mx-auto grid max-w-lg grid-cols-5 rounded-full border border-slate-200 bg-white px-1 shadow-[0_8px_24px_-10px_rgba(15,30,19,0.3)]">
+      <ul style={{ gridTemplateColumns: `repeat(${columnas}, minmax(0, 1fr))` }} className="relative mx-auto grid max-w-lg rounded-full border border-slate-200 bg-white px-1 shadow-[0_8px_24px_-10px_rgba(15,30,19,0.3)]">
         {/* Misma estructura que una pestaña (ícono + texto invisible) para que la píldora calce exacto bajo el ícono */}
         <li aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-1 flex w-[calc((100%-0.5rem)/5)] flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-tight transition-transform duration-[450ms] ease-[cubic-bezier(0.34,1.3,0.64,1)]"
-          style={{ transform: `translateX(${indice * 100}%)` }}>
+          className="pointer-events-none absolute inset-y-0 left-1 flex flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-tight transition-transform duration-[450ms] ease-[cubic-bezier(0.34,1.3,0.64,1)]"
+          style={{ width: `calc((100% - 0.5rem) / ${columnas})`, transform: `translateX(${indice * 100}%)` }}>
           <span className="h-8 w-14 rounded-full bg-emerald-100" />
           <span className="invisible">Más</span>
         </li>

@@ -60,7 +60,11 @@ const GRANOS_UVA: [number, number][] = [
 export function Fruta({ tipo, ancho, className = '' }: { tipo: TipoFruta; ancho: number; className?: string }) {
   const id = useId().replace(/:/g, '')
   const [w, h] = LIENZO[tipo]
-  const sombra = `url(#s${id})`
+  // Sombra de contacto: una elipse con degradado (se dibuja una vez). Un filtro SVG se volvía a calcular
+  // al desplazar la pantalla y hacía tironear el celular
+  const sombra = (
+    <ellipse cx={w / 2} cy={h - 4} rx={w * 0.34} ry={5} fill={`url(#s${id})`} />
+  )
   const degradado = (stops: [number, string][], cx = 0.36, cy = 0.32, r = 0.72) => (
     <radialGradient id={`g${id}`} cx={cx} cy={cy} r={r}>
       {stops.map(([o, c]) => <stop key={o} offset={o} stopColor={c} />)}
@@ -69,9 +73,10 @@ export function Fruta({ tipo, ancho, className = '' }: { tipo: TipoFruta; ancho:
   return (
     <svg aria-hidden="true" viewBox={`0 0 ${w} ${h}`} width={ancho} height={(ancho * h) / w} className={`overflow-visible ${className}`}>
       <defs>
-        <filter id={`s${id}`} x="-30%" y="-30%" width="160%" height="170%">
-          <feDropShadow dx="0" dy="8" stdDeviation="5" floodColor="#000" floodOpacity="0.16" />
-        </filter>
+        <radialGradient id={`s${id}`}>
+          <stop offset="0" stopColor="#000" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#000" stopOpacity="0" />
+        </radialGradient>
         {tipo === 'naranja' && degradado([[0, '#ffc27a'], [0.45, '#f29a3a'], [1, '#c8661a']])}
         {tipo === 'cerezas' && degradado([[0, '#e0584f'], [0.5, '#b3302f'], [1, '#6e1414']], 0.35, 0.3, 0.75)}
         {tipo === 'uvas' && degradado([[0, '#e6f5da'], [0.55, '#afd98e'], [1, '#6fa552']], 0.35, 0.3, 0.75)}
@@ -83,7 +88,8 @@ export function Fruta({ tipo, ancho, className = '' }: { tipo: TipoFruta; ancho:
       </defs>
       {tipo === 'naranja' && (
         <>
-          <circle cx="60" cy="66" r="52" fill={`url(#g${id})`} filter={sombra} />
+          {sombra}
+          <circle cx="60" cy="66" r="52" fill={`url(#g${id})`} />
           <ellipse cx="42" cy="46" rx="14" ry="9" transform="rotate(-30 42 46)" fill={`url(#b${id})`} />
           <circle cx="60" cy="16" r="3.5" fill={TALLO} />
           <path d="M62 15C72 2 92 2 98 10C88 18 74 20 62 15Z" fill={HOJA} />
@@ -92,11 +98,12 @@ export function Fruta({ tipo, ancho, className = '' }: { tipo: TipoFruta; ancho:
       )}
       {tipo === 'cerezas' && (
         <>
+          {sombra}
           <path d="M36 92C44 54 60 26 74 8M86 98C80 60 76 30 74 8" stroke={HOJA} strokeWidth="4" strokeLinecap="round" fill="none" />
           <path d="M74 8C86 2 102 6 108 16C96 20 82 18 74 8Z" fill={HOJA_CLARA} />
           {([[34, 98, 24], [86, 104, 22]] as const).map(([cx, cy, r]) => (
             <g key={cx}>
-              <circle cx={cx} cy={cy} r={r} fill={`url(#g${id})`} filter={sombra} />
+              <circle cx={cx} cy={cy} r={r} fill={`url(#g${id})`} />
               <ellipse cx={cx - r * 0.38} cy={cy - r * 0.42} rx={r * 0.26} ry={r * 0.16}
                 transform={`rotate(-35 ${cx - r * 0.38} ${cy - r * 0.42})`} fill="#fff" fillOpacity="0.7" />
             </g>
@@ -105,9 +112,10 @@ export function Fruta({ tipo, ancho, className = '' }: { tipo: TipoFruta; ancho:
       )}
       {tipo === 'uvas' && (
         <>
+          {sombra}
           <path d="M62 22C62 12 66 6 74 2" stroke={TALLO} strokeWidth="4" strokeLinecap="round" fill="none" />
           <path d="M66 14C56 2 38 2 30 12C42 20 56 20 66 14Z" fill={HOJA} />
-          <g filter={sombra}>
+          <g>
             {GRANOS_UVA.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="12" fill={`url(#g${id})`} />)}
           </g>
           {GRANOS_UVA.map(([x, y]) => <circle key={`b${x}-${y}`} cx={x - 4} cy={y - 4} r="2.6" fill="#fff" fillOpacity="0.65" />)}
@@ -115,7 +123,8 @@ export function Fruta({ tipo, ancho, className = '' }: { tipo: TipoFruta; ancho:
       )}
       {tipo === 'durazno' && (
         <>
-          <path d="M60 18C96 18 112 46 112 72C112 100 88 118 60 118C32 118 8 100 8 72C8 46 24 18 60 18Z" fill={`url(#g${id})`} filter={sombra} />
+          {sombra}
+          <path d="M60 18C96 18 112 46 112 72C112 100 88 118 60 118C32 118 8 100 8 72C8 46 24 18 60 18Z" fill={`url(#g${id})`} />
           <path d="M60 22C54 50 54 84 62 116" stroke="#b4472a" strokeOpacity="0.45" strokeWidth="2" fill="none" />
           <path d="M60 20C66 6 84 2 94 8C86 16 72 20 60 20Z" fill={HOJA} />
         </>
