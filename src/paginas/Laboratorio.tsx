@@ -5,7 +5,7 @@ import { useAccion, useDatos } from '../hooks'
 import { fecha, hoyIso, num } from '../formato'
 import type { Analisis } from '../tipos'
 import { useSesionActiva } from '../contexto/Sesion'
-import {
+import { AvisoTemporada,
   Boton, Campo, CampoArchivo, Cargando, EncabezadoPagina, Insignia, MensajeError, Modal, Vacio, claseEntrada,
   useAviso,
 } from '../componentes/ui'
@@ -483,6 +483,7 @@ function NuevoAnalisis({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
 
   return (
     <Modal abierto titulo="Nuevo análisis" onCerrar={onCerrar} ancho="max-w-3xl">
+      <AvisoTemporada />
       {repetido.nodo}
       <form onSubmit={guardar} className="space-y-4">
         <section className="rounded-xl border border-slate-200 bg-slate-50 p-3">

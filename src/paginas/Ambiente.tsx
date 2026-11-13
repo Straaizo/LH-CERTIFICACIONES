@@ -6,7 +6,7 @@ import { fecha, hoyIso, num } from '../formato'
 import type { UnidadRef } from '../tipos'
 import { useSesionActiva } from '../contexto/Sesion'
 import { BotonInformePdf, VentanaComparativa } from './AmbienteComparativa'
-import {
+import { AvisoTemporada,
   Boton, Campo, Cargando, EncabezadoPagina, MensajeError, Pestanas, Tarjeta, Vacio, claseEntrada, useAviso,
 } from '../componentes/ui'
 import { Selector } from '../componentes/Desplegable'
@@ -205,6 +205,7 @@ function HuellaCarbono({ soloCombustible = false }: { soloCombustible?: boolean 
 
       {puedeEscribir && (
         <Tarjeta titulo={soloCombustible ? 'Registrar consumo de combustible' : 'Registrar consumo'}>
+          <AvisoTemporada />
           <form onSubmit={guardar} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
             <Campo etiqueta="Sucursal">
               <Selector className={claseEntrada} required value={unidadId ?? ''} onChange={(e) => setUnidadId(Number(e.target.value) || undefined)}>
@@ -368,6 +369,7 @@ function Reciclaje() {
 
       {puedeEscribir && (
         <Tarjeta titulo="Registrar reciclaje">
+          <AvisoTemporada />
           <form onSubmit={guardar} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
             <Campo etiqueta="Sucursal">
               <Selector className={claseEntrada} required value={unidadId ?? ''} onChange={(e) => setUnidadId(Number(e.target.value) || undefined)}>

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AUTH_MODO, EVENTO_SESION_TERMINADA, api, configurarAuth, guardarTokens, tokenAcceso, vaciarMemoria, type Tokens } from '../api'
+import { AUTH_MODO, EVENTO_SESION_TERMINADA, api, configurarAuth, fijarTemporada, guardarTokens, tokenAcceso, vaciarMemoria, type Tokens } from '../api'
 import type { Catalogos, Filtros, Modulo, Permiso, Usuario } from '../tipos'
 
 interface ValorSesion {
@@ -132,6 +132,11 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     setUsuario(null)
     setCatalogos(null)
   }, [])
+
+  // Lo que se guarde queda en la temporada elegida arriba (la API la recibe en cada petición y la valida)
+  useEffect(() => {
+    fijarTemporada(filtros.temporada_id)
+  }, [filtros.temporada_id])
 
   // Usuario desactivado, sin acceso a la app o sesión inválida: fuera de inmediato, al login y con el motivo
   useEffect(() => {

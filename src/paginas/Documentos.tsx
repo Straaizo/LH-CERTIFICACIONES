@@ -9,7 +9,7 @@ import { useAccion, useDatos } from '../hooks'
 import { fecha, fechaYHora } from '../formato'
 import type { AnalisisDocumento, Documento, FichaCertificado, PropuestaCertificado, SeccionDoc } from '../tipos'
 import { useSesionActiva } from '../contexto/Sesion'
-import {
+import { AvisoTemporada,
   Boton, Campo, CampoArchivo, Cargando, EncabezadoPagina, Insignia, MensajeError, Modal, Pestanas, Vacio, claseEntrada,
   useAviso,
 } from '../componentes/ui'
@@ -636,6 +636,7 @@ function NuevaVersion({ doc, onCerrar, onCreada }: {
 
   return (
     <Modal abierto titulo={`Nueva versión: ${doc.titulo}`} onCerrar={onCerrar}>
+      <AvisoTemporada />
       {repetido.nodo}
       <form onSubmit={guardar} className="space-y-4">
         <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
@@ -732,6 +733,7 @@ function NuevoDocumento({ seccionInicial, onCerrar, onCreado }: {
 
   return (
     <Modal abierto titulo={destino ? 'Versión nueva de un documento fijo' : 'Nuevo documento fijo'} onCerrar={onCerrar} ancho="max-w-3xl">
+      <AvisoTemporada />
       <form onSubmit={guardar} className="space-y-4">
         <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
           Queda guardado de inmediato, sin aprobación. Los documentos fijos no van por sucursal: se ordenan por sección.

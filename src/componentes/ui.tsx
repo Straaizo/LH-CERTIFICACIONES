@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowLeft, Camera, CircleAlert, FileUp, Loader2, X } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Camera, CircleAlert, FileUp, Loader2, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { EsqueletoCarga, type VarianteCarga } from './Esqueletos'
 import { Hoja, useEsMovil } from './Hoja'
@@ -163,6 +163,27 @@ export function ErrorPagina({ error, volverA, volverTexto, onReintentar }: {
     </div>
   )
 }
+
+/**
+ * Franja de los formularios de carga: en qué temporada se guardará lo que se sube (la elegida arriba).
+ * Para cargar en otra hay que cambiarla arriba antes; la API rechaza lo que no calce con su fecha.
+ */
+export function AvisoTemporada() {
+  const valor = useContext(ContextoTemporada)
+  if (!valor) return null
+  return (
+    <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-900">
+      <CalendarDays className="mt-0.5 h-[18px] w-[18px] shrink-0 text-emerald-700" />
+      <p>
+        <strong>Se guardará en la temporada {valor}.</strong>{' '}
+        <span className="text-emerald-800">Para cargar en otra, cámbiala arriba antes de subir.</span>
+      </p>
+    </div>
+  )
+}
+
+/** Nombre de la temporada seleccionada arriba (lo entrega el Layout). */
+export const ContextoTemporada = createContext<string | null>(null)
 
 export function Vacio({ children }: { children: ReactNode }) {
   return <div className="py-10 text-center text-sm text-slate-500">{children}</div>

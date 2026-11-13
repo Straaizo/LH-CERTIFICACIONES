@@ -13,7 +13,7 @@ import { BarraContexto, SelectoresSucursal } from './BarraFiltros'
 import { Desplegable } from './Desplegable'
 import { Hoja, LIVIANO, RESORTE, useEsMovil } from './Hoja'
 import { useLiviano } from '../rendimiento'
-import { ContextoMiga, Cargando } from './ui'
+import { ContextoMiga, ContextoTemporada, Cargando } from './ui'
 import { FondoOrganico } from './Escena'
 import {
   AvisoActualizacion, AvisoInstalar, BarraConexion, BarraPestanas, EVENTO_REFRESCAR, PESTANAS, TirarParaRecargar, textoVersion, usaPestanas, usePWA,
@@ -134,7 +134,9 @@ function Marca({ compacto = false }: { compacto?: boolean }) {
 }
 
 export function Layout() {
-  const { esCertificaciones, puedeVer } = useSesionActiva()
+  const { esCertificaciones, puedeVer, filtros, catalogos } = useSesionActiva()
+  // Temporada en que se guardará lo que se suba (franja de los formularios de carga)
+  const temporadaNombre = catalogos.temporadas.find((t) => t.id === filtros.temporada_id)?.nombre ?? null
   const grupos = useGrupos()
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [masAbierto, setMasAbierto] = useState(false)
@@ -279,6 +281,7 @@ export function Layout() {
   const fondoVerde = 'bg-emerald-700'
 
   return (
+    <ContextoTemporada.Provider value={temporadaNombre}>
     <ContextoMiga.Provider value={valorMiga}>
       {/* Alto de la pantalla visible; como app instalada, el del documento (ver .modo-app en index.css) */}
       <div className="h-dvh overflow-hidden [@media(display-mode:standalone)]:h-full">
@@ -360,6 +363,7 @@ export function Layout() {
       <AvisoActualizacion sobrePestanas={pestanas} />
       {modoApp && <TirarParaRecargar />}
     </ContextoMiga.Provider>
+    </ContextoTemporada.Provider>
   )
 }
 

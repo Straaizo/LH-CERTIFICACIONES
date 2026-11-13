@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, CheckCircle2, Eye, FileSpreadsheet, Upload, XCircle } from 'lucide-react'
 import { api } from '../api'
-import {
+import { AvisoTemporada,
   BarraPorcentaje,
   Boton,
   Campo,
@@ -158,6 +158,7 @@ function ImportarBrcgs() {
   return (
     <Tarjeta titulo="Auditoría interna BRCGS (planilla Excel)">
       <div className="space-y-3">
+        <AvisoTemporada />
         <Campo etiqueta="Planilla (.xlsx)" ayuda="Cada hoja es una auditoría: lugar, auditor, fecha, alcance y checklist.">
           <SelectorPlanilla
             onCambio={(f) => {

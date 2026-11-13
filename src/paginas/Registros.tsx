@@ -6,7 +6,7 @@ import { useAccion, useDatos } from '../hooks'
 import { fecha, fechaYHora } from '../formato'
 import type { UnidadRef } from '../tipos'
 import { useSesionActiva } from '../contexto/Sesion'
-import {
+import { AvisoTemporada,
   BarraPorcentaje, Boton, Campo, Cargando, ElegirArchivo, EncabezadoPagina, Insignia, MensajeError, Modal, Pestanas, Vacio,
   claseEntrada,
   useAviso, type Tono,
@@ -541,6 +541,7 @@ function NuevoRegistro({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
 
   return (
     <Modal abierto titulo="Nuevo registro" onCerrar={onCerrar}>
+      <AvisoTemporada />
       <form onSubmit={guardar} className="space-y-4">
         <MensajeError error={plantillas.error} onReintentar={plantillas.recargar} />
         {plantillas.cargando && !plantillas.datos ? (

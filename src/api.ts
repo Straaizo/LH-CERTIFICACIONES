@@ -166,6 +166,19 @@ export function vaciarMemoria(): void {
   memoria.clear()
 }
 
+// ---------- Temporada seleccionada ----------
+// Lo que se guarda queda en la temporada elegida arriba: se envía en cada petición (cabecera X-Temporada) y la API
+// la valida contra la fecha del dato. La fija Sesion.tsx al cambiar el filtro de temporada.
+let temporadaSeleccionada: number | undefined
+
+export function fijarTemporada(id: number | undefined) {
+  temporadaSeleccionada = id
+}
+
+function cabeceraTemporada(): Record<string, string> {
+  return temporadaSeleccionada ? { 'X-Temporada': String(temporadaSeleccionada) } : {}
+}
+
 // ---------- Sesión terminada por la API ----------
 // Si el portal desactiva al usuario, le quita el acceso a la app o la sesión ya no es válida, la API lo rechaza en la
 // siguiente petición. La app avisa con este evento y Sesion.tsx lo saca al login de inmediato con el motivo.
@@ -187,6 +200,7 @@ async function pedir<T>(metodo: string, ruta: string, cuerpo?: unknown, params?:
       method: metodo,
       headers: {
         ...cabeceraClaveDemo(),
+        ...cabeceraTemporada(),
         ...(await obtenerCabeceraAuth()),
         ...(cuerpo !== undefined && !esForm ? { 'Content-Type': 'application/json' } : {}),
       },

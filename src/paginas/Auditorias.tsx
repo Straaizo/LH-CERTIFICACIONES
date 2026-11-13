@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AlertTriangle, CalendarPlus, Eye } from 'lucide-react'
 import { api } from '../api'
-import {
+import { AvisoTemporada,
   BarraPorcentaje,
   Boton,
   Campo,
@@ -315,6 +315,7 @@ function ModalPlanificar({ onCerrar, onCreada }: { onCerrar: () => void; onCread
 
   return (
     <Modal abierto titulo="Planificar auditoría" onCerrar={onCerrar} ancho="max-w-lg">
+      <AvisoTemporada />
       <form onSubmit={enviar} className="space-y-3">
         <Campo etiqueta="Título (opcional)" ayuda="Si lo dejas vacío se usa un título automático.">
           <input

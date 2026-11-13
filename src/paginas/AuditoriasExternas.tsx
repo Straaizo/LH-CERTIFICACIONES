@@ -8,7 +8,7 @@ import { abrirUrlFirmada, api, descargarArchivo } from '../api'
 import { useAccion, useDatos } from '../hooks'
 import { fecha, num } from '../formato'
 import { useSesionActiva } from '../contexto/Sesion'
-import { Boton, Cargando, EncabezadoPagina, Insignia, MensajeError, Tarjeta, Vacio, useAviso } from '../componentes/ui'
+import { AvisoTemporada, Boton, Cargando, EncabezadoPagina, Insignia, MensajeError, Tarjeta, Vacio, useAviso } from '../componentes/ui'
 import { useConfirmarRepetido } from '../componentes/ConfirmarRepetido'
 import type { UnidadRef } from '../tipos'
 
@@ -131,6 +131,7 @@ export function AuditoriasExternas() {
           </>
         }
       />
+      <AvisoTemporada />
       <MensajeError error={subida.error ?? error} />
       {repetido.nodo}
 
