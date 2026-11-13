@@ -66,6 +66,8 @@ interface ResultadoChecklist {
   archivo: string
   formato: string
   protocolo_sugerido: string | null
+  /** Normas compatibles con el formato de la planilla: el selector solo ofrece estas */
+  protocolos_permitidos?: string[]
   protocolo: string | null
   protocolo_nombre: string | null
   version: string
@@ -443,7 +445,9 @@ function CargaChecklist({ protocoloFijo }: { protocoloFijo?: { codigo: string; n
                 }}
               >
                 <option value="">Elige el protocolo</option>
-                {catalogos.protocolos.map((p) => <option key={p.codigo} value={p.codigo}>{p.nombre}</option>)}
+                {catalogos.protocolos
+                  .filter((p) => !resultado.protocolos_permitidos?.length || resultado.protocolos_permitidos.includes(p.codigo))
+                  .map((p) => <option key={p.codigo} value={p.codigo}>{p.nombre}</option>)}
               </Selector>
             </Campo>
           )}
