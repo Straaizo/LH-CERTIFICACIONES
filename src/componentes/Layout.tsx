@@ -74,7 +74,7 @@ function useClicFuera(abierto: boolean, cerrar: () => void) {
 }
 
 function useGrupos(): { titulo: string; enlaces: Enlace[] }[] {
-  const { esCertificaciones, veHistorial, puedeVer } = useSesionActiva()
+  const { esCertificaciones, veTodo, veHistorial, puedeVer } = useSesionActiva()
   return [
     {
       titulo: 'Operación',
@@ -93,7 +93,7 @@ function useGrupos(): { titulo: string; enlaces: Enlace[] }[] {
         ...(puedeVer('AUDITORIAS') ? [{
           a: '/auditorias', texto: 'Auditorías', icono: ClipboardCheck,
           // Las externas son documentos de consulta de certificaciones
-          hijos: esCertificaciones
+          hijos: veTodo
             ? [
                 { a: '/auditorias', texto: 'Internas', corto: 'Auditorías internas' },
                 { a: '/auditorias-externas', texto: 'Externas', corto: 'Auditorías externas' },

@@ -93,7 +93,7 @@ function Puntajes({ puntajes, compacto = false }: { puntajes: Puntaje[]; compact
 // ---------- Lista ----------
 
 export function AuditoriasExternas() {
-  const { filtros, setFiltros } = useSesionActiva()
+  const { filtros, setFiltros, esCertificaciones } = useSesionActiva()
   const { datos, cargando, error, recargar } = useDatos<InformeExterno[]>('/auditorias-externas', { ...filtros })
   const entrada = useRef<HTMLInputElement>(null)
   const subida = useAccion()
@@ -121,7 +121,7 @@ export function AuditoriasExternas() {
       <EncabezadoPagina
         titulo="Auditorías externas"
         descripcion="Informes de la certificadora como documento de consulta: súbelos y la aplicación arma el resumen. No generan no conformidades."
-        acciones={
+        acciones={esCertificaciones && (
           <>
             <Boton icono={<Upload className="h-4 w-4" />} ocupado={subida.ocupado} onClick={() => entrada.current?.click()}>
               Subir informes
@@ -129,9 +129,9 @@ export function AuditoriasExternas() {
             <input ref={entrada} type="file" accept="application/pdf,.pdf" multiple className="hidden"
               onChange={(e) => { subir(e.target.files); e.target.value = '' }} />
           </>
-        }
+        )}
       />
-      <AvisoTemporada />
+      {esCertificaciones && <AvisoTemporada />}
       <MensajeError error={subida.error ?? error} />
       {repetido.nodo}
 
@@ -246,6 +246,7 @@ function BarraPreguntas({ p }: { p: Preguntas }) {
 
 export function AuditoriaExternaDetalle() {
   const { id } = useParams()
+  const { esCertificaciones } = useSesionActiva()
   const { datos: d, cargando, error, recargar } = useDatos<DetalleExterno>(`/auditorias-externas/${id}`)
   const descarga = useAccion()
   const version = useAccion()
@@ -308,11 +309,15 @@ export function AuditoriaExternaDetalle() {
           onClick={() => void descarga.ejecutar(() => descargarArchivo(`/auditorias-externas/${d.id}/resumen.docx`, undefined, `${nombreBase}.docx`))}>
           Resumen Word
         </Boton>
-        <Boton variante="secundario" icono={<FileUp className="h-4 w-4" />} ocupado={version.ocupado} onClick={() => entrada.current?.click()}>
-          Subir versión nueva
-        </Boton>
-        <input ref={entrada} type="file" accept="application/pdf,.pdf" className="hidden"
-          onChange={(e) => { subirVersion(e.target.files?.[0]); e.target.value = '' }} />
+        {esCertificaciones && (
+          <>
+            <Boton variante="secundario" icono={<FileUp className="h-4 w-4" />} ocupado={version.ocupado} onClick={() => entrada.current?.click()}>
+              Subir versión nueva
+            </Boton>
+            <input ref={entrada} type="file" accept="application/pdf,.pdf" className="hidden"
+              onChange={(e) => { subirVersion(e.target.files?.[0]); e.target.value = '' }} />
+          </>
+        )}
       </div>
       <MensajeError error={descarga.error ?? version.error} />
 

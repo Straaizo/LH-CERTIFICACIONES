@@ -13,6 +13,8 @@ interface ValorSesion {
   ingresar: (usuario: string, clave: string) => Promise<void>
   salir: () => Promise<void>
   esCertificaciones: boolean
+  /** Ve todo Certificaciones (ADMIN o CERTIFICACIONES_VER): todas las sucursales, externas, huella y reciclaje */
+  veTodo: boolean
   /** Ve el historial completo de cambios: permiso propio del portal, no basta con ADMIN */
   veHistorial: boolean
   /** Puede ver el módulo (el menú y las rutas se ocultan si no) */
@@ -175,6 +177,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     ingresar,
     salir,
     esCertificaciones: usuario?.rol === 'certificaciones',
+    veTodo: usuario?.rol === 'certificaciones' || !!usuario?.permisos.includes('CERTIFICACIONES_VER'),
     veHistorial: !!usuario?.permisos.includes('CERTIFICACIONES_HISTORIAL'),
     puedeVer,
     puedeEscribir: !!usuario && usuario.rol !== 'lectura',

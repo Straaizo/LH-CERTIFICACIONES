@@ -52,7 +52,7 @@ function precargar() {
 import { EsqueletoApp } from './componentes/Esqueletos'
 
 export function App() {
-  const { usuario, catalogos, cargando, esCertificaciones, veHistorial, puedeVer } = useSesion()
+  const { usuario, catalogos, cargando, esCertificaciones, veTodo, veHistorial, puedeVer } = useSesion()
   const conSesion = !!usuario && !!catalogos
   useEffect(() => {
     if (conSesion) precargar()
@@ -77,8 +77,8 @@ export function App() {
         <Route path="configuracion" element={<Configuracion />} />
         {esCertificaciones && <Route path="importar" element={<Importar />} />}
         {veHistorial && <Route path="historial" element={<Historial />} />}
-        {esCertificaciones && <Route path="auditorias-externas" element={<AuditoriasExternas />} />}
-        {esCertificaciones && <Route path="auditorias-externas/:id" element={<AuditoriaExternaDetalle />} />}
+        {veTodo && <Route path="auditorias-externas" element={<AuditoriasExternas />} />}
+        {veTodo && <Route path="auditorias-externas/:id" element={<AuditoriaExternaDetalle />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

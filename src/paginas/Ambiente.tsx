@@ -83,11 +83,11 @@ function Barras({ filas, unidad, color = 'bg-emerald-600' }: {
 }
 
 export function Ambiente() {
-  const { usuario } = useSesionActiva()
+  const { veTodo } = useSesionActiva()
   const [pestana, setPestana] = useState<Pestana>('huella')
   const [comparativa, setComparativa] = useState(false)
   // Administrativos y jefes de área solo registran diésel, bencina y gas de sus campos
-  if (usuario.rol === 'encargado') {
+  if (!veTodo) {
     return (
       <div>
         <EncabezadoPagina titulo="Medio ambiente" descripcion="Registra el consumo de combustible de tu campo: diésel, bencina y gas."
