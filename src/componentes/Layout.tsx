@@ -104,7 +104,7 @@ function useGrupos(): { titulo: string; enlaces: Enlace[] }[] {
       ],
     },
     ...(puedeVer('IMPORTAR')
-      ? [{ titulo: 'Configuración', enlaces: [{ a: '/importar', texto: 'Importar planillas', icono: Upload }] }]
+      ? [{ titulo: 'Configuración', enlaces: [{ a: '/importar', texto: 'Normas', icono: Upload }] }]
       : []),
     {
       titulo: 'Sistema',

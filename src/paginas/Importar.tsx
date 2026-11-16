@@ -96,10 +96,9 @@ export function Importar() {
     <div className="space-y-4">
       <EncabezadoPagina
         sinFiltros
-        titulo="Importar planillas"
-        descripcion="El importador muestra los errores de la planilla para revisión; no los corrige en silencio."
+        titulo="Normas"
+        descripcion="Checklist oficiales de cada norma y sus versiones. Las auditorías hechas en Excel se importan desde Auditorías internas."
       />
-      <ImportarBrcgs />
       <ImportarChecklist />
       <VersionesCargadas />
     </div>
@@ -129,7 +128,8 @@ function ListaAdvertencias({ titulo, lista, tono }: { titulo: string; lista: str
   )
 }
 
-function ImportarBrcgs() {
+/** Importa auditorías internas BRCGS hechas en Excel. Se usa dentro de una ventana en Auditorías internas. */
+export function ImportarBrcgs({ onConfirmada }: { onConfirmada?: () => void }) {
   const { catalogos, recargarCatalogos } = useSesionActiva()
   const [archivo, setArchivo] = useState<File | null>(null)
   const [unidadId, setUnidadId] = useState<number | ''>('')
@@ -151,14 +151,17 @@ function ImportarBrcgs() {
       setResultado(await api.post<ResultadoBrcgs>('/importaciones/brcgs', formulario(archivo, true, unidadId)))
       await recargarCatalogos()
     })
-    if (ok) avisar('Importación confirmada')
+    if (ok) {
+      avisar('Importación confirmada')
+      onConfirmada?.()
+    }
   }
 
   const importables = resultado?.hojas.filter((h) => !h.errores.length).length ?? 0
   const faltaUnidad = resultado?.hojas.some((h) => !h.unidad) ?? false
 
   return (
-    <Tarjeta titulo="Auditoría interna BRCGS (planilla Excel)">
+    <div>
       <div className="space-y-3">
         <AvisoTemporada />
         <Campo etiqueta="Planilla (.xlsx)" ayuda="Cada hoja es una auditoría: lugar, auditor, fecha, alcance y checklist.">
@@ -230,7 +233,7 @@ function ImportarBrcgs() {
         )}
       </div>
       {nodo}
-    </Tarjeta>
+    </div>
   )
 }
 

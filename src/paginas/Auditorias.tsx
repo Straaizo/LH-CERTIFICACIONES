@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertTriangle, CalendarPlus, Eye } from 'lucide-react'
+import { AlertTriangle, CalendarPlus, Eye, FileSpreadsheet } from 'lucide-react'
 import { api } from '../api'
 import { AvisoTemporada,
   BarraPorcentaje,
@@ -24,6 +24,7 @@ import { useAccion, useDatos } from '../hooks'
 import type { Auditoria, UnidadRef } from '../tipos'
 import { Selector } from '../componentes/Desplegable'
 import { VerVersionNorma } from '../componentes/VersionNorma'
+import { ImportarBrcgs } from './Importar'
 
 interface SeccionCobertura {
   codigo: string
@@ -79,6 +80,7 @@ export function Auditorias() {
   const { puede } = useSesionActiva()
   const [pestana, setPestana] = useState<'auditorias' | 'programa'>('auditorias')
   const [planificando, setPlanificando] = useState(false)
+  const [importando, setImportando] = useState(false)
   const [version, setVersion] = useState(0)
   const { avisar, nodo } = useAviso()
 
@@ -88,10 +90,19 @@ export function Auditorias() {
         titulo="Auditorías"
         descripcion="Auditorías internas por protocolo y sucursal, y programa anual de cobertura de cláusulas."
         acciones={
-          puede('AUDITORIAS_EDITAR') ? (
-            <Boton icono={<CalendarPlus className="h-4 w-4" />} onClick={() => setPlanificando(true)}>
-              Planificar auditoría
-            </Boton>
+          puede('AUDITORIAS_EDITAR') || puede('AUDITORIAS_IMPORTAR') ? (
+            <>
+              {puede('AUDITORIAS_IMPORTAR') && (
+                <Boton variante="secundario" icono={<FileSpreadsheet className="h-4 w-4" />} onClick={() => setImportando(true)}>
+                  Importar desde Excel
+                </Boton>
+              )}
+              {puede('AUDITORIAS_EDITAR') && (
+                <Boton icono={<CalendarPlus className="h-4 w-4" />} onClick={() => setPlanificando(true)}>
+                  Planificar auditoría
+                </Boton>
+              )}
+            </>
           ) : (
             <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm" title="Responder auditorías requiere permiso para editarlas. Las no conformidades de tus sucursales se trabajan en No conformidades.">
               <Eye className="h-4 w-4" /> Solo lectura
@@ -117,6 +128,11 @@ export function Auditorias() {
             avisar('Auditoría planificada')
           }}
         />
+      )}
+      {importando && (
+        <Modal abierto titulo="Importar auditoría interna BRCGS (planilla Excel)" onCerrar={() => setImportando(false)} ancho="max-w-3xl">
+          <ImportarBrcgs onConfirmada={() => setVersion((v) => v + 1)} />
+        </Modal>
       )}
       {nodo}
     </div>

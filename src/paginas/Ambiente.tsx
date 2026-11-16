@@ -83,16 +83,18 @@ function Barras({ filas, unidad, color = 'bg-emerald-600' }: {
 }
 
 export function Ambiente() {
-  const { veTodo } = useSesionActiva()
+  const { veTodo, puede } = useSesionActiva()
   const [pestana, setPestana] = useState<Pestana>('huella')
   const [comparativa, setComparativa] = useState(false)
-  // Administrativos y jefes de área solo registran diésel, bencina y gas de sus campos
+  // Administrativos y jefes de área registran diésel, bencina y gas de sus campos; con "Consumos (todos)", todos los conceptos
   if (!veTodo) {
+    const todos = puede('AMBIENTE_TODOS')
     return (
       <div>
-        <EncabezadoPagina titulo="Medio ambiente" descripcion="Registra el consumo de combustible de tu campo: diésel, bencina y gas."
-          acciones={<BotonInformePdf />} />
-        <HuellaCarbono soloCombustible />
+        <EncabezadoPagina titulo="Medio ambiente" acciones={<BotonInformePdf />}
+          descripcion={todos ? 'Registra los consumos de tus sucursales: combustibles, electricidad, fertilizantes y más.'
+            : 'Registra el consumo de combustible de tu campo: diésel, bencina y gas.'} />
+        <HuellaCarbono soloCombustible todosLosConceptos={todos} />
       </div>
     )
   }
@@ -133,9 +135,9 @@ function unidadInicial(unidades: UnidadRef[], filtro?: number): number | undefin
 
 // ---------- Huella de carbono ----------
 
-function HuellaCarbono({ soloCombustible = false }: { soloCombustible?: boolean }) {
+function HuellaCarbono({ soloCombustible = false, todosLosConceptos = false }: { soloCombustible?: boolean; todosLosConceptos?: boolean }) {
   const { catalogos, filtros, puede } = useSesionActiva()
-  const puedeEscribir = puede('AMBIENTE_EDITAR')
+  const puedeEscribir = puede('AMBIENTE_EDITAR') || puede('AMBIENTE_TODOS')
   const huella = useDatos<Huella>(soloCombustible ? null : '/ambiente/huella', { ...filtros })
   const consumos = useDatos<Consumo[]>('/ambiente/consumos', { ...filtros })
   const conceptos = useDatos<Concepto[]>('/ambiente/conceptos')
@@ -204,7 +206,7 @@ function HuellaCarbono({ soloCombustible = false }: { soloCombustible?: boolean 
       )}
 
       {puedeEscribir && (
-        <Tarjeta titulo={soloCombustible ? 'Registrar consumo de combustible' : 'Registrar consumo'}>
+        <Tarjeta titulo={soloCombustible && !todosLosConceptos ? 'Registrar consumo de combustible' : 'Registrar consumo'}>
           <AvisoTemporada />
           <form onSubmit={guardar} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
             <Campo etiqueta="Sucursal">
