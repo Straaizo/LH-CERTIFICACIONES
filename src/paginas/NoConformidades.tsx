@@ -41,7 +41,8 @@ export function NoConformidades() {
 }
 
 function ListaNoConformidades() {
-  const { filtros, esCertificaciones, usuario } = useSesionActiva()
+  const { filtros, puede, usuario } = useSesionActiva()
+  const revisa = puede('NC_REVISAR')
   const esEncargado = usuario.rol === 'encargado'
   const [filtro, setFiltro] = useState<Filtro>('pendientes')
   const [busqueda, setBusqueda] = useState('')
@@ -66,14 +67,14 @@ function ListaNoConformidades() {
   )
 
   const lista = useMemo(() => {
-    const prioridad = esCertificaciones ? PRIORIDAD_CERTIFICACIONES : PRIORIDAD_ENCARGADO
+    const prioridad = revisa ? PRIORIDAD_CERTIFICACIONES : PRIORIDAD_ENCARGADO
     const prueba = FILTROS.find((f) => f.valor === filtro)!.prueba
     return base.filter(prueba).sort((a, b) => {
       const p = prioridad[estadoPlan(a)] - prioridad[estadoPlan(b)]
       if (p) return p
       return (a.dias_para_plazo ?? Infinity) - (b.dias_para_plazo ?? Infinity)
     })
-  }, [base, filtro, esCertificaciones])
+  }, [base, filtro, revisa])
 
   return (
     <div>
@@ -167,7 +168,7 @@ function ListaNoConformidades() {
       ) : (
         <ul className="space-y-2">
           {lista.map((nc) => (
-            <FilaNc key={nc.id} nc={nc} codigos={codigos ?? {}} esCertificaciones={esCertificaciones} />
+            <FilaNc key={nc.id} nc={nc} codigos={codigos ?? {}} revisa={revisa} />
           ))}
         </ul>
       )}
@@ -175,20 +176,20 @@ function ListaNoConformidades() {
   )
 }
 
-function FilaNc({ nc, codigos, esCertificaciones }: {
+function FilaNc({ nc, codigos, revisa }: {
   nc: NoConformidad
   codigos: Record<string, string>
-  esCertificaciones: boolean
+  revisa: boolean
 }) {
   const plan = estadoPlan(nc)
-  const porRevisar = esCertificaciones && plan === 'enviado'
-  const accionJefe = !esCertificaciones && (plan === 'devuelta' || plan === 'pendiente' || plan === 'borrador')
+  const porRevisar = revisa && plan === 'enviado'
+  const accionJefe = !revisa && (plan === 'devuelta' || plan === 'pendiente' || plan === 'borrador')
   return (
     <li>
       <Link
         to={`/no-conformidades/${nc.id}`}
         className={`group flex gap-3 rounded-xl border bg-white p-4 shadow-sm transition-colors hover:border-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 ${
-          porRevisar ? 'border-emerald-300 ring-1 ring-emerald-200' : plan === 'devuelta' && !esCertificaciones ? 'border-red-200' : 'border-slate-200'
+          porRevisar ? 'border-emerald-300 ring-1 ring-emerald-200' : plan === 'devuelta' && !revisa ? 'border-red-200' : 'border-slate-200'
         }`}
       >
         <div className="min-w-0 flex-1">

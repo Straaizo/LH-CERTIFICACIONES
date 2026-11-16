@@ -52,7 +52,7 @@ function precargar() {
 import { EsqueletoApp } from './componentes/Esqueletos'
 
 export function App() {
-  const { usuario, catalogos, cargando, esCertificaciones, veTodo, veHistorial, puedeVer } = useSesion()
+  const { usuario, catalogos, cargando, veHistorial, puedeVer } = useSesion()
   const conSesion = !!usuario && !!catalogos
   useEffect(() => {
     if (conSesion) precargar()
@@ -63,10 +63,10 @@ export function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Inicio />} />
-        {(puedeVer('REGISTROS') || puedeVer('DOCUMENTOS')) && <Route path="registros" element={<Registros />} />}
+        {(puedeVer('REGISTROS') || puedeVer('DOCUMENTOS') || puedeVer('PLANTILLAS')) && <Route path="registros" element={<Registros />} />}
         {puedeVer('REGISTROS') && <Route path="registros/r/:id" element={<RegistroDetalle />} />}
         {puedeVer('DOCUMENTOS') && <Route path="documentos" element={<RedireccionDocumentos />} />}
-        {puedeVer('DOCUMENTOS') && <Route path="vencimientos" element={<Vencimientos />} />}
+        {puedeVer('VENCIMIENTOS') && <Route path="vencimientos" element={<Vencimientos />} />}
         {puedeVer('LABORATORIO') && <Route path="laboratorio" element={<Laboratorio />} />}
         {puedeVer('LABORATORIO') && <Route path="laboratorio/residuos" element={<ResiduosDestinos />} />}
         {puedeVer('AUDITORIAS') && <Route path="auditorias" element={<Auditorias />} />}
@@ -75,10 +75,10 @@ export function App() {
         {puedeVer('NC') && <Route path="no-conformidades/:id" element={<NoConformidadDetalle />} />}
         {puedeVer('AMBIENTE') && <Route path="ambiente" element={<Ambiente />} />}
         <Route path="configuracion" element={<Configuracion />} />
-        {esCertificaciones && <Route path="importar" element={<Importar />} />}
+        {puedeVer('IMPORTAR') && <Route path="importar" element={<Importar />} />}
         {veHistorial && <Route path="historial" element={<Historial />} />}
-        {veTodo && <Route path="auditorias-externas" element={<AuditoriasExternas />} />}
-        {veTodo && <Route path="auditorias-externas/:id" element={<AuditoriaExternaDetalle />} />}
+        {puedeVer('AUDITORIAS_EXTERNAS') && <Route path="auditorias-externas" element={<AuditoriasExternas />} />}
+        {puedeVer('AUDITORIAS_EXTERNAS') && <Route path="auditorias-externas/:id" element={<AuditoriaExternaDetalle />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

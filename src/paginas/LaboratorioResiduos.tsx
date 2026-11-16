@@ -386,6 +386,7 @@ function CargarCarta({ abierta, onCerrar, onCargada, cartas }: {
 export function ResiduosDestinos() {
   const { puede, catalogos } = useSesionActiva()
   const puedeEditar = puede('LABORATORIO_EDITAR')
+  const cargaAsoex = puede('LABORATORIO_ASOEX')
   const asoex = useDatos<EstadoAsoex>('/laboratorio/asoex')
   const frutas = useMemo(() => asoex.datos?.frutas ?? [], [asoex.datos])
   const hayAsoex = frutas.length > 0
@@ -477,7 +478,7 @@ export function ResiduosDestinos() {
       <EncabezadoPagina
         titulo="Residuos y destinos (MRL)"
         descripcion="Residuos de plaguicidas del informe de laboratorio comparados con los límites de ASOEX de cada país de destino."
-        acciones={puedeEditar && (
+        acciones={cargaAsoex && (
           <>
             <Boton variante="secundario" icono={<Globe2 className="h-4 w-4" />} onClick={() => setCartaAbierta(true)}>
               Carta de destino
@@ -494,7 +495,7 @@ export function ResiduosDestinos() {
         <Tarjeta>
           <Vacio>
             Para comparar, primero carga los límites de ASOEX (la agenda de cada especie o la planilla general).
-            {puedeEditar && <span className="mt-3 block"><Boton icono={<Upload className="h-4 w-4" />} onClick={() => setCargarPara('')}>Cargar ASOEX</Boton></span>}
+            {cargaAsoex && <span className="mt-3 block"><Boton icono={<Upload className="h-4 w-4" />} onClick={() => setCargarPara('')}>Cargar ASOEX</Boton></span>}
           </Vacio>
         </Tarjeta>
       ) : (
@@ -558,7 +559,7 @@ export function ResiduosDestinos() {
                       </p>
                     )}
                   </div>
-                  {puedeEditar && (
+                  {cargaAsoex && (
                     <Boton variante="secundario" icono={frutaActual ? <RefreshCw className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
                       onClick={() => setCargarPara(lectura.fruta ?? '')}>
                       {frutaActual ? 'Actualizar límites' : 'Cargar límites'} de {nombreEspecie(lectura.fruta)}

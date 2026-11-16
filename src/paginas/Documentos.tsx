@@ -44,7 +44,8 @@ function textoVersion(d: Documento): string {
 }
 
 export function Documentos({ embebido = false }: { embebido?: boolean }) {
-  const { catalogos, filtros, esCertificaciones } = useSesionActiva()
+  const { catalogos, filtros, puede } = useSesionActiva()
+  const editaDocumentos = puede('DOCUMENTOS_EDITAR')
   const [parametros, setParametros] = useSearchParams()
   const [seccion, setSeccion] = useState<'' | SeccionDoc>('')
   const [categoriaId, setCategoriaId] = useState('')
@@ -81,7 +82,7 @@ export function Documentos({ embebido = false }: { embebido?: boolean }) {
       <Boton variante="secundario" icono={<FolderArchive className="h-4 w-4" />} onClick={() => setCarpetaAbierta(true)}>
         Carpeta para el auditor
       </Boton>
-      {esCertificaciones && (
+      {editaDocumentos && (
         <Boton icono={<Plus className="h-4 w-4" />} onClick={() => setNuevoAbierto(true)}>
           Nuevo documento fijo
         </Boton>
@@ -212,7 +213,7 @@ export function Documentos({ embebido = false }: { embebido?: boolean }) {
           id={docAbierto}
           onCerrar={cerrarDetalle}
           onCambio={(msg) => { avisar(msg); void recargar() }}
-          puedeSubir={esCertificaciones}
+          puedeSubir={editaDocumentos}
         />
       )}
       {nuevoAbierto && (
@@ -659,7 +660,7 @@ function NuevaVersion({ doc, onCerrar, onCreada }: {
   )
 }
 
-// ---------- Nuevo documento fijo (solo certificaciones) ----------
+// ---------- Nuevo documento fijo (DOCUMENTOS_EDITAR) ----------
 
 function NuevoDocumento({ seccionInicial, onCerrar, onCreado }: {
   seccionInicial: SeccionDoc
@@ -796,7 +797,7 @@ function NuevoDocumento({ seccionInicial, onCerrar, onCreado }: {
 // ---------- Carpeta para el auditor ----------
 
 function CarpetaAuditor({ onCerrar }: { onCerrar: () => void }) {
-  const { catalogos, filtros, esCertificaciones } = useSesionActiva()
+  const { catalogos, filtros, veTodo } = useSesionActiva()
   const [protocoloId, setProtocoloId] = useState<string | undefined>(filtros.protocolo_id ?? catalogos.protocolos[0]?.id)
   const [empresaId, setEmpresaId] = useState<number | undefined>(
     filtros.empresa_id ?? catalogos.unidades.find((u) => u.id === filtros.unidad_id)?.empresa_id ?? catalogos.empresas[0]?.id,
@@ -816,7 +817,7 @@ function CarpetaAuditor({ onCerrar }: { onCerrar: () => void }) {
   const generar = async (e: FormEvent) => {
     e.preventDefault()
     if (!protocoloId || !protocoloValido || !empresaId || !temporadaId) return accion.setError('Elige protocolo, empresa y temporada')
-    if (!esCertificaciones && !unidadId) return accion.setError('Indica una de tus sucursales')
+    if (!veTodo && !unidadId) return accion.setError('Indica una de tus sucursales')
     await accion.ejecutar(() =>
       descargarArchivo('/carpeta-auditor', {
         protocolo_id: protocoloId,
@@ -845,9 +846,9 @@ function CarpetaAuditor({ onCerrar }: { onCerrar: () => void }) {
               {catalogos.empresas.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
             </Selector>
           </Campo>
-          <Campo etiqueta={esCertificaciones ? 'Sucursal (opcional)' : 'Sucursal (obligatoria)'}>
-            <Selector className={claseEntrada} value={unidadId ?? ''} required={!esCertificaciones} onChange={(e) => setUnidadId(Number(e.target.value) || undefined)}>
-              <option value="">{esCertificaciones ? 'Todas las sucursales' : 'Elige una sucursal'}</option>
+          <Campo etiqueta={veTodo ? 'Sucursal (opcional)' : 'Sucursal (obligatoria)'}>
+            <Selector className={claseEntrada} value={unidadId ?? ''} required={!veTodo} onChange={(e) => setUnidadId(Number(e.target.value) || undefined)}>
+              <option value="">{veTodo ? 'Todas las sucursales' : 'Elige una sucursal'}</option>
               {unidades.map((u) => <option key={u.id} value={u.id}>{u.nombre} ({u.tipo})</option>)}
             </Selector>
           </Campo>

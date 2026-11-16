@@ -76,7 +76,7 @@ function rangoFechas(a: Pick<Auditoria, 'fecha_inicio' | 'fecha_fin'>): string {
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
 export function Auditorias() {
-  const { esCertificaciones } = useSesionActiva()
+  const { puede } = useSesionActiva()
   const [pestana, setPestana] = useState<'auditorias' | 'programa'>('auditorias')
   const [planificando, setPlanificando] = useState(false)
   const [version, setVersion] = useState(0)
@@ -88,12 +88,12 @@ export function Auditorias() {
         titulo="Auditorías"
         descripcion="Auditorías internas por protocolo y sucursal, y programa anual de cobertura de cláusulas."
         acciones={
-          esCertificaciones ? (
+          puede('AUDITORIAS_EDITAR') ? (
             <Boton icono={<CalendarPlus className="h-4 w-4" />} onClick={() => setPlanificando(true)}>
               Planificar auditoría
             </Boton>
           ) : (
-            <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm" title="Las auditorías las responde certificaciones. Las no conformidades de tus sucursales se trabajan en No conformidades.">
+            <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm" title="Responder auditorías requiere permiso para editarlas. Las no conformidades de tus sucursales se trabajan en No conformidades.">
               <Eye className="h-4 w-4" /> Solo lectura
             </span>
           )

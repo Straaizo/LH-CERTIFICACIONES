@@ -303,8 +303,8 @@ function HuellaCarbono({ soloCombustible = false }: { soloCombustible?: boolean 
 // ---------- Reciclaje ----------
 
 function Reciclaje() {
-  // El reciclaje lo registra el equipo de certificaciones
-  const { catalogos, filtros, esCertificaciones: puedeEscribir } = useSesionActiva()
+  const { catalogos, filtros, puede } = useSesionActiva()
+  const puedeEscribir = puede('AMBIENTE_RECICLAJE')
   const registros = useDatos<RegistroReciclaje[]>('/ambiente/reciclaje', { ...filtros })
   const { avisar, nodo: nodoAviso } = useAviso()
   const accion = useAccion()

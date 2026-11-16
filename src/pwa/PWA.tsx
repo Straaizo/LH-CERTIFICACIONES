@@ -606,29 +606,29 @@ export function usaPestanas(pathname: string, modoApp: boolean): boolean {
 }
 
 /** Hasta 4 pestañas, solo de los módulos que el usuario puede ver; el resto va en la hoja "Más". */
-export function PESTANAS(esCertificaciones: boolean, puedeVer: (m: Modulo) => boolean): Pestana[] {
-  const tercera = esCertificaciones && puedeVer('AUDITORIAS')
+export function PESTANAS(planificaAuditorias: boolean, puedeVer: (m: Modulo) => boolean): Pestana[] {
+  const tercera = planificaAuditorias && puedeVer('AUDITORIAS')
     ? { a: '/auditorias', texto: 'Auditorías', icono: ClipboardCheck }
     : puedeVer('LABORATORIO') ? { a: '/laboratorio', texto: 'Laboratorio', icono: FlaskConical }
       : puedeVer('AUDITORIAS') ? { a: '/auditorias', texto: 'Auditorías', icono: ClipboardCheck }
         : puedeVer('AMBIENTE') ? { a: '/ambiente', texto: 'Ambiente', icono: Leaf } : null
   return [
     { a: '/', texto: 'Inicio', icono: LayoutDashboard },
-    ...(puedeVer('REGISTROS') || puedeVer('DOCUMENTOS') ? [{ a: '/registros', texto: 'Registros', icono: FileText }] : []),
+    ...(puedeVer('REGISTROS') || puedeVer('DOCUMENTOS') || puedeVer('PLANTILLAS') ? [{ a: '/registros', texto: 'Registros', icono: FileText }] : []),
     ...(tercera ? [tercera] : []),
     ...(puedeVer('NC') ? [{ a: '/no-conformidades', texto: 'NC', icono: AlertTriangle }] : []),
   ]
 }
 
-export function BarraPestanas({ esCertificaciones, puedeVer, masAbierto, onMas }: {
-  esCertificaciones: boolean
+export function BarraPestanas({ planificaAuditorias, puedeVer, masAbierto, onMas }: {
+  planificaAuditorias: boolean
   puedeVer: (m: Modulo) => boolean
   masAbierto: boolean
   onMas: () => void
 }) {
   const ref = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
-  const pestanas = PESTANAS(esCertificaciones, puedeVer)
+  const pestanas = PESTANAS(planificaAuditorias, puedeVer)
   const columnas = pestanas.length + 1
   const activaRuta = pestanas.find((p) => (p.a === '/' ? pathname === '/' : pathname === p.a || pathname.startsWith(`${p.a}/`)))?.a
   // Con la hoja "Más" abierta (o en una sección que no está en las pestañas), la activa es "Más"

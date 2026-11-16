@@ -66,7 +66,7 @@ function EstadoPildora({ v }: { v: Vencimiento }) {
 }
 
 export function Vencimientos() {
-  const { filtros, esCertificaciones } = useSesionActiva()
+  const { filtros, puede } = useSesionActiva()
   const navegar = useNavigate()
   const [grupo, setGrupo] = useState<Grupo | ''>('')
   const [busqueda, setBusqueda] = useState('')
@@ -92,7 +92,7 @@ export function Vencimientos() {
         sinFiltros
         titulo="Vencimientos"
         descripcion="Certificados subidos como documentos fijos, ordenados por fecha de vencimiento. Para agregar o renovar un certificado, súbelo en Documentos fijos con la categoría Certificados."
-        acciones={esCertificaciones && (
+        acciones={puede('DOCUMENTOS_EDITAR') && (
           <Link
             to="/registros"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-[15px] font-semibold text-white hover:bg-emerald-800"

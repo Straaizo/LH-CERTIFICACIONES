@@ -74,15 +74,15 @@ function useClicFuera(abierto: boolean, cerrar: () => void) {
 }
 
 function useGrupos(): { titulo: string; enlaces: Enlace[] }[] {
-  const { esCertificaciones, veTodo, veHistorial, puedeVer } = useSesionActiva()
+  const { veHistorial, puedeVer } = useSesionActiva()
   return [
     {
       titulo: 'Operación',
       enlaces: [
         { a: '/', texto: 'Inicio', icono: LayoutDashboard },
-        // Registros agrupa los documentos fijos y los registros: se ve con cualquiera de los dos
-        ...(puedeVer('REGISTROS') || puedeVer('DOCUMENTOS') ? [{ a: '/registros', texto: 'Registros', icono: FileText }] : []),
-        ...(puedeVer('DOCUMENTOS') ? [{ a: '/vencimientos', texto: 'Vencimientos', icono: CalendarClock }] : []),
+        // Registros agrupa documentos fijos, registros y plantillas: se ve con cualquiera de ellos
+        ...(puedeVer('REGISTROS') || puedeVer('DOCUMENTOS') || puedeVer('PLANTILLAS') ? [{ a: '/registros', texto: 'Registros', icono: FileText }] : []),
+        ...(puedeVer('VENCIMIENTOS') ? [{ a: '/vencimientos', texto: 'Vencimientos', icono: CalendarClock }] : []),
         ...(puedeVer('LABORATORIO') ? [{
           a: '/laboratorio', texto: 'Laboratorio', icono: FlaskConical,
           hijos: [
@@ -92,19 +92,18 @@ function useGrupos(): { titulo: string; enlaces: Enlace[] }[] {
         }] : []),
         ...(puedeVer('AUDITORIAS') ? [{
           a: '/auditorias', texto: 'Auditorías', icono: ClipboardCheck,
-          // Las externas son documentos de consulta de certificaciones
-          hijos: veTodo
+          hijos: puedeVer('AUDITORIAS_EXTERNAS')
             ? [
                 { a: '/auditorias', texto: 'Internas', corto: 'Auditorías internas' },
                 { a: '/auditorias-externas', texto: 'Externas', corto: 'Auditorías externas' },
               ]
             : undefined,
-        }] : []),
+        }] : puedeVer('AUDITORIAS_EXTERNAS') ? [{ a: '/auditorias-externas', texto: 'Auditorías externas', icono: ClipboardCheck }] : []),
         ...(puedeVer('NC') ? [{ a: '/no-conformidades', texto: 'No conformidades', icono: AlertTriangle }] : []),
         ...(puedeVer('AMBIENTE') ? [{ a: '/ambiente', texto: 'Medio ambiente', icono: Leaf }] : []),
       ],
     },
-    ...(esCertificaciones
+    ...(puedeVer('IMPORTAR')
       ? [{ titulo: 'Configuración', enlaces: [{ a: '/importar', texto: 'Importar planillas', icono: Upload }] }]
       : []),
     {
@@ -134,7 +133,7 @@ function Marca({ compacto = false }: { compacto?: boolean }) {
 }
 
 export function Layout() {
-  const { esCertificaciones, puedeVer, filtros, catalogos } = useSesionActiva()
+  const { puede, puedeVer, filtros, catalogos } = useSesionActiva()
   // Temporada en que se guardará lo que se suba (franja de los formularios de carga)
   const temporadaNombre = catalogos.temporadas.find((t) => t.id === filtros.temporada_id)?.nombre ?? null
   const grupos = useGrupos()
@@ -354,7 +353,7 @@ export function Layout() {
             </main>
           </div>
           {pestanas && (
-            <BarraPestanas esCertificaciones={esCertificaciones} puedeVer={puedeVer} masAbierto={masAbierto} onMas={() => setMasAbierto(true)} />
+            <BarraPestanas planificaAuditorias={puede('AUDITORIAS_EDITAR')} puedeVer={puedeVer} masAbierto={masAbierto} onMas={() => setMasAbierto(true)} />
           )}
         </div>
       </div>
@@ -470,8 +469,8 @@ const PIE_SALIR = <BotonSalir />
 const ContenidoMas = memo(function ContenidoMas() {
   const grupos = useGrupos()
   const { pathname } = useLocation()
-  const { esCertificaciones, puedeVer } = useSesionActiva()
-  const enPestanas = new Set(PESTANAS(esCertificaciones, puedeVer).map((p) => p.a))
+  const { puede, puedeVer } = useSesionActiva()
+  const enPestanas = new Set(PESTANAS(puede('AUDITORIAS_EDITAR'), puedeVer).map((p) => p.a))
   // Las subsecciones van como mosaicos propios (Residuos MRL, Auditorías externas)
   const secciones = grupos
     .flatMap((g) => g.enlaces.flatMap((e) => e.hijos ? e.hijos.map((h) => ({ a: h.a, texto: h.corto, icono: e.icono, exacto: h.exacto }))

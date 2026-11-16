@@ -196,14 +196,14 @@ const nombrePlantilla = (p: Pick<Plantilla, 'codigo' | 'nombre'>) => (p.codigo ?
 type Seccion = 'documentos' | 'registros' | 'plantillas'
 
 export function Registros() {
-  const { esCertificaciones, puedeVer } = useSesionActiva()
+  const { puedeVer } = useSesionActiva()
   const [parametros, setParametros] = useSearchParams()
   const pedida = parametros.get('seccion')
-  // Cada pestaña según su módulo: documentos fijos (DOCUMENTOS) y registros (REGISTROS)
+  // Cada pestaña según su módulo: documentos fijos (DOCUMENTOS), registros (REGISTROS) y plantillas (PLANTILLAS)
   const opciones: { valor: Seccion; etiqueta: string }[] = [
     ...(puedeVer('DOCUMENTOS') ? [{ valor: 'documentos' as const, etiqueta: 'Documentos fijos' }] : []),
     ...(puedeVer('REGISTROS') ? [{ valor: 'registros' as const, etiqueta: 'Registros' }] : []),
-    ...(esCertificaciones ? [{ valor: 'plantillas' as const, etiqueta: 'Plantillas' }] : []),
+    ...(puedeVer('PLANTILLAS') ? [{ valor: 'plantillas' as const, etiqueta: 'Plantillas' }] : []),
   ]
   const visibles = new Set(opciones.map((o) => o.valor))
   const seccion: Seccion = parametros.get('doc') && visibles.has('documentos')
@@ -221,7 +221,7 @@ export function Registros() {
       <Pestanas opciones={opciones} valor={seccion} onCambio={(v) => setParametros(new URLSearchParams({ seccion: v }))} />
       {seccion === 'documentos' && <Documentos embebido />}
       {seccion === 'registros' && <ListaRegistros />}
-      {seccion === 'plantillas' && esCertificaciones && <ListaPlantillas />}
+      {seccion === 'plantillas' && puedeVer('PLANTILLAS') && <ListaPlantillas />}
     </div>
   )
 }
@@ -229,7 +229,8 @@ export function Registros() {
 // ---------- Registros ----------
 
 function ListaRegistros() {
-  const { filtros, esCertificaciones } = useSesionActiva()
+  const { filtros, puede } = useSesionActiva()
+  const revisa = puede('REGISTROS_REVISAR')
   const navigate = useNavigate()
   const [estado, setEstado] = useState<FiltroRegistro>('')
   const [plantillaId, setPlantillaId] = useState('')
@@ -264,12 +265,12 @@ function ListaRegistros() {
 
   return (
     <div>
-      {esCertificaciones && <ActividadReciente />}
+      {revisa && <ActividadReciente />}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-500">
           Los registros se crean desde una plantilla; el encargado los llena y certificaciones los aprueba.
         </p>
-        {esCertificaciones && (
+        {revisa && (
           <Boton icono={<Plus className="h-4 w-4" />} onClick={() => setNuevoAbierto(true)}>
             Nuevo registro
           </Boton>
@@ -342,7 +343,7 @@ function ListaRegistros() {
                     <p className="mt-2 rounded-lg bg-red-50 px-2 py-1 text-xs text-red-700">{r.observacion}</p>
                   )}
                 </button>
-                {esCertificaciones && (
+                {revisa && (
                   <div className="flex gap-2 border-t border-slate-100 p-3">
                     <Boton className="flex-1 py-3" icono={<Eye className="h-4 w-4" />} onClick={() => abrir(r.id)}>Ver avance</Boton>
                     <Boton variante="secundario" className="flex-1 py-3" icono={<Download className="h-4 w-4" />}
@@ -363,7 +364,7 @@ function ListaRegistros() {
                   <th className="px-4 py-2.5">Fecha de revisión</th>
                   <th className="px-4 py-2.5">Estado</th>
                   <th className="min-w-52 px-4 py-2.5">Avance</th>
-                  {esCertificaciones && <th className="px-3 py-2"><span className="sr-only">Acciones</span></th>}
+                  {revisa && <th className="px-3 py-2"><span className="sr-only">Acciones</span></th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -387,7 +388,7 @@ function ListaRegistros() {
                       <BarraPorcentaje valor={r.avance.porcentaje} />
                       <UltimoCambio registro={r} className="mt-1" />
                     </td>
-                    {esCertificaciones && (
+                    {revisa && (
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex gap-2">
                           <Boton variante="secundario" className="whitespace-nowrap" icono={<Eye className="h-4 w-4" />} onClick={() => abrir(r.id)}>
@@ -606,6 +607,8 @@ function NuevoRegistro({ onCerrar, onCreado }: { onCerrar: () => void; onCreado:
 // ---------- Plantillas ----------
 
 function ListaPlantillas() {
+  const { puede } = useSesionActiva()
+  const editaPlantillas = puede('PLANTILLAS_EDITAR')
   const { datos, cargando, error, recargar } = useDatos<Plantilla[]>('/registros/plantillas')
   const [editando, setEditando] = useState<Plantilla | 'nueva' | null>(null)
   const [importando, setImportando] = useState(false)
@@ -616,12 +619,14 @@ function ListaPlantillas() {
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-500">Las plantillas definen los campos que el encargado debe llenar en cada registro.</p>
-        <div className="flex flex-wrap gap-2">
-          <Boton variante="secundario" icono={<FileUp className="h-4 w-4" />} onClick={() => setImportando(true)}>
-            Importar desde Word
-          </Boton>
-          <Boton icono={<Plus className="h-4 w-4" />} onClick={() => setEditando('nueva')}>Nueva plantilla</Boton>
-        </div>
+        {editaPlantillas && (
+          <div className="flex flex-wrap gap-2">
+            <Boton variante="secundario" icono={<FileUp className="h-4 w-4" />} onClick={() => setImportando(true)}>
+              Importar desde Word
+            </Boton>
+            <Boton icono={<Plus className="h-4 w-4" />} onClick={() => setEditando('nueva')}>Nueva plantilla</Boton>
+          </div>
+        )}
       </div>
 
       <MensajeError error={error} onReintentar={recargar} />
@@ -647,9 +652,11 @@ function ListaPlantillas() {
                 </div>
                 {p.descripcion && <p className="mt-1 text-xs text-slate-500">{p.descripcion}</p>}
               </div>
-              <Boton variante="secundario" icono={<Pencil className="h-4 w-4" />} onClick={() => setEditando(p)}>
-                Editar
-              </Boton>
+              {editaPlantillas && (
+                <Boton variante="secundario" icono={<Pencil className="h-4 w-4" />} onClick={() => setEditando(p)}>
+                  Editar
+                </Boton>
+              )}
             </div>
           ))}
         </div>

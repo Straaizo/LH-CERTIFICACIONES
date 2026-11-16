@@ -52,8 +52,9 @@ export function NoConformidadDetalle() {
   const { id } = useParams()
   const { datos: nc, cargando, error, recargar, setDatos } = useDatos<NoConformidad>(`/no-conformidades/${id}`)
   const { datos: codigos } = useDatos<Record<string, string>>('/documentos/codigos')
-  const { esCertificaciones, puede } = useSesionActiva()
+  const { puede } = useSesionActiva()
   const puedeEscribir = puede('NC_EDITAR')
+  const revisa = puede('NC_REVISAR')
   const { avisar, nodo } = useAviso()
 
   if (cargando && !nc) return <EsqueletoDetalle />
@@ -71,7 +72,7 @@ export function NoConformidadDetalle() {
   }
 
   const cerrada = nc.estado === 'cerrada'
-  const editable = puedeEscribir && !cerrada && (!nc.plan.enviado_en || esCertificaciones)
+  const editable = puedeEscribir && !cerrada && (!nc.plan.enviado_en || revisa)
   const actualizar = (nueva: NoConformidad, mensaje: string) => {
     setDatos(nueva)
     avisar(mensaje)
@@ -85,7 +86,7 @@ export function NoConformidadDetalle() {
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3 lg:items-start">
         <aside className="space-y-4 lg:sticky lg:top-6 lg:order-2 lg:max-h-[calc(100dvh-72px-3rem)] lg:overflow-y-auto">
           <PanelEstado nc={nc} />
-          {esCertificaciones && !cerrada && (
+          {revisa && !cerrada && (
             <PanelRevision nc={nc} onRevisada={(nueva, cumple) => actualizar(nueva, cumple ? 'No conformidad cerrada' : 'Devuelta al jefe de área')} />
           )}
         </aside>

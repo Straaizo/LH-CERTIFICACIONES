@@ -66,8 +66,9 @@ function textoSimple(tipo: TipoColumna | 'texto', v: unknown): string {
 
 export function RegistroDetalle() {
   const { id } = useParams()
-  const { esCertificaciones, puede, usuario } = useSesionActiva()
+  const { puede, usuario } = useSesionActiva()
   const puedeEscribir = puede('REGISTROS_EDITAR')
+  const revisa = puede('REGISTROS_REVISAR')
   const { datos: registro, cargando, error, recargar, setDatos } = useDatos<Registro>(`/registros/${id}`)
   const historial = useDatos<EventoRegistro[]>(`/registros/${id}/historial`)
   const accion = useAccion()
@@ -79,9 +80,12 @@ export function RegistroDetalle() {
   const [observacion, setObservacion] = useState('')
 
   const campos = useMemo(() => registro?.campos ?? [], [registro])
-  const estadosEditables = esCertificaciones ? ['borrador', 'rechazado', 'en_revision'] : ['borrador', 'rechazado']
-  const editable = !!registro && puedeEscribir && estadosEditables.includes(registro.estado)
-  const corrigiendo = editable && esCertificaciones && registro?.responsable?.id !== usuario.id
+  // Llenar: borrador o rechazado (REGISTROS_EDITAR). Corregir en revisión: REGISTROS_REVISAR
+  const editable = !!registro && (
+    (puedeEscribir && ['borrador', 'rechazado'].includes(registro.estado))
+    || (revisa && registro.estado === 'en_revision')
+  )
+  const corrigiendo = editable && revisa && registro?.responsable?.id !== usuario.id
 
   useEffect(() => {
     if (registro) {
@@ -206,8 +210,8 @@ export function RegistroDetalle() {
         <UltimoCambio registro={registro} className="mt-2" />
       </Tarjeta>
 
-      {/* Arriba, para que certificaciones vea siempre quién cambió qué y cuándo */}
-      <HistorialCambios historial={historial} abiertoInicial={esCertificaciones} />
+      {/* Arriba, para que quien revisa vea siempre quién cambió qué y cuándo */}
+      <HistorialCambios historial={historial} abiertoInicial={revisa} />
 
       {registro.estado === 'rechazado' && registro.observacion && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -225,7 +229,7 @@ export function RegistroDetalle() {
 
       {corrigiendo && (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          Estás corrigiendo como certificaciones: el cambio queda registrado con tu nombre.
+          Estás corrigiendo como revisor: el cambio queda registrado con tu nombre.
         </div>
       )}
 
@@ -285,7 +289,7 @@ export function RegistroDetalle() {
       )}
       {editable && cambios && <p className="mt-2 text-xs text-amber-700">Hay cambios sin guardar.</p>}
 
-      {esCertificaciones && registro.estado === 'en_revision' && (
+      {revisa && registro.estado === 'en_revision' && (
         <Tarjeta titulo="Revisión" className="mt-4">
           {rechazando ? (
             <div className="space-y-3">
@@ -313,7 +317,7 @@ export function RegistroDetalle() {
         </Tarjeta>
       )}
 
-      {(esCertificaciones || registro.estado === 'aprobado') && (
+      {(revisa || registro.estado === 'aprobado') && (
         <Tarjeta titulo="Descargar" className="mt-4">
           <div className="flex flex-col gap-2 sm:flex-row">
             <Boton variante="secundario" className="py-3 sm:py-2" icono={<Download className="h-4 w-4" />} ocupado={accion.ocupado} onClick={() => exportar('docx')}>

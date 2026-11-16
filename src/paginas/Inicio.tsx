@@ -234,7 +234,7 @@ export function Inicio() {
   // Cada bloque solo si el usuario ve su módulo (la API además los manda vacíos)
   const ve = {
     reg: puedeVer('REGISTROS'), doc: puedeVer('DOCUMENTOS'), nc: puedeVer('NC'),
-    lab: puedeVer('LABORATORIO'), aud: puedeVer('AUDITORIAS'),
+    lab: puedeVer('LABORATORIO'), aud: puedeVer('AUDITORIAS'), ven: puedeVer('VENCIMIENTOS'),
     todo: usuario.permisos.some((p) => p === 'CERTIFICACIONES_ADMIN' || p === 'CERTIFICACIONES_VER'),
   }
 
@@ -251,12 +251,12 @@ export function Inicio() {
         frase={`Estado general${datos.temporada.nombre ? ` · temporada ${datos.temporada.nombre}` : ''}`}
         acciones={filtrosContexto}
       >
-        {(ve.reg || ve.doc || ve.nc || ve.lab) && (
+        {(ve.reg || ve.ven || ve.nc || ve.lab) && (
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 xl:grid-cols-8">
             {ve.reg && <Indicador icono={ClipboardCheck} etiqueta="Registros por revisar" valor={String(k.registros_por_revisar)} enlace="/registros?seccion=registros" />}
             {ve.reg && <Indicador icono={Clock} etiqueta="Registros atrasados (15+ días sin revisión)" valor={String(k.registros_atrasados)} enlace="/registros?seccion=registros" tono={k.registros_atrasados > 0 ? 'error' : 'neutro'} />}
-            {ve.doc && <Indicador icono={CalendarX} etiqueta="Vencidos" valor={String(k.vencidos)} enlace="/vencimientos" tono={k.vencidos > 0 ? 'error' : 'neutro'} />}
-            {ve.doc && <Indicador icono={CalendarClock} etiqueta="Vencen en ≤30 días" valor={String(k.vencen_30)} enlace="/vencimientos" tono={k.vencen_30 > 0 ? 'atencion' : 'neutro'} />}
+            {ve.ven && <Indicador icono={CalendarX} etiqueta="Vencidos" valor={String(k.vencidos)} enlace="/vencimientos" tono={k.vencidos > 0 ? 'error' : 'neutro'} />}
+            {ve.ven && <Indicador icono={CalendarClock} etiqueta="Vencen en ≤30 días" valor={String(k.vencen_30)} enlace="/vencimientos" tono={k.vencen_30 > 0 ? 'atencion' : 'neutro'} />}
             {ve.nc && <Indicador icono={AlertTriangle} etiqueta="NC abiertas" valor={String(k.nc_abiertas)} enlace="/no-conformidades" />}
             {ve.nc && <Indicador icono={RotateCcw} etiqueta="NC reincidentes (devueltas por certificaciones)" valor={String(k.nc_reincidentes)} enlace="/no-conformidades" tono={k.nc_reincidentes > 0 ? 'error' : 'neutro'} />}
             {ve.nc && <Indicador icono={AlarmClockOff} etiqueta="NC con plazo vencido" valor={String(k.nc_vencidas)} enlace="/no-conformidades" tono={k.nc_vencidas > 0 ? 'error' : 'neutro'} />}
@@ -274,7 +274,7 @@ export function Inicio() {
       </Hero>
       <MensajeError error={error} onReintentar={recargar} />
 
-      {!(ve.reg || ve.doc || ve.nc || ve.lab || ve.aud) && (
+      {!(ve.reg || ve.doc || ve.ven || ve.nc || ve.lab || ve.aud) && (
         <Tarjeta titulo="Tu acceso">
           <p className="text-sm text-slate-600">
             {puedeVer('AMBIENTE') ? (
@@ -306,7 +306,7 @@ export function Inicio() {
         </div>
       )}
 
-      {(ve.nc || ve.doc || ve.lab) && (
+      {(ve.nc || ve.ven || ve.lab) && (
       <div className="grid gap-4 lg:grid-cols-3">
         {ve.nc && (
         <Tarjeta titulo="NC reincidentes abiertas">
@@ -318,7 +318,7 @@ export function Inicio() {
         </Tarjeta>
         )}
 
-        {ve.doc && (
+        {ve.ven && (
         <Tarjeta titulo="Próximos vencimientos" acciones={<Link to="/vencimientos" className="inline-flex min-h-9 items-center rounded-lg px-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">Ver todos</Link>}>
           {datos.proximos_vencimientos.length ? (
             <ul className="divide-y divide-slate-100">

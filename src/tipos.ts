@@ -15,9 +15,31 @@ export type Permiso =
   | 'AMBIENTE_VER'
   | 'AUDITORIAS_VER'
   | 'DOCUMENTOS_VER'
+  | 'DOCUMENTOS_EDITAR'
+  | 'REGISTROS_REVISAR'
+  | 'PLANTILLAS_VER'
+  | 'PLANTILLAS_EDITAR'
+  | 'VENCIMIENTOS_VER'
+  | 'LABORATORIO_ASOEX'
+  | 'AUDITORIAS_EDITAR'
+  | 'AUDITORIAS_EXTERNAS_VER'
+  | 'AUDITORIAS_EXTERNAS_EDITAR'
+  | 'NC_REVISAR'
+  | 'AMBIENTE_RECICLAJE'
+  | 'IMPORTAR_PLANILLAS'
 
 /** Módulos que el usuario puede ver (permiso _VER o _EDITAR, o ADMIN / CERTIFICACIONES_VER). Lo calcula la API. */
-export type Modulo = 'REGISTROS' | 'DOCUMENTOS' | 'LABORATORIO' | 'AUDITORIAS' | 'NC' | 'AMBIENTE'
+export type Modulo =
+  | 'REGISTROS'
+  | 'DOCUMENTOS'
+  | 'PLANTILLAS'
+  | 'VENCIMIENTOS'
+  | 'LABORATORIO'
+  | 'AUDITORIAS'
+  | 'AUDITORIAS_EXTERNAS'
+  | 'NC'
+  | 'AMBIENTE'
+  | 'IMPORTAR'
 
 /** Sucursal de general_dim_sucursal. tipo: ámbito de normas y plantillas (packing = planta). */
 export interface UnidadRef {

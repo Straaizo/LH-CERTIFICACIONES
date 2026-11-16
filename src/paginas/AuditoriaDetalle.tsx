@@ -59,7 +59,8 @@ function claseAvance(c: AvanceClausula): string {
 
 export function AuditoriaDetalle() {
   const { id } = useParams()
-  const { esCertificaciones } = useSesionActiva()
+  const { puede } = useSesionActiva()
+  const editaAuditorias = puede('AUDITORIAS_EDITAR')
   const { datos, cargando, error, recargar, setDatos } = useDatos<Detalle>(`/auditorias/${id}`)
   const { datos: codigos } = useDatos<Record<string, string>>('/documentos/codigos')
   const [parametros, setParametros] = useSearchParams()
@@ -106,7 +107,7 @@ export function AuditoriaDetalle() {
   if (error && !datos) return <ErrorPagina error={error} volverA="/auditorias" volverTexto="Auditorías" onReintentar={recargar} />
   if (!datos) return null
 
-  const editable = esCertificaciones && datos.estado !== 'cerrada' && !datos.emitida_en
+  const editable = editaAuditorias && datos.estado !== 'cerrada' && !datos.emitida_en
   const r = datos.resumen
   const actual = datos.clausulas.find((c) => c.codigo === clausula) ?? null
 
@@ -186,12 +187,12 @@ export function AuditoriaDetalle() {
             <Boton variante="secundario" icono={<Download className="h-4 w-4" />} onClick={() => setDescargando(true)}>
               Descargar Excel
             </Boton>
-            {!esCertificaciones && (
-              <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm" title="Las auditorías las responde certificaciones. Las no conformidades de tus sucursales se trabajan en No conformidades.">
+            {!editaAuditorias && (
+              <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm" title="Responder auditorías requiere permiso para editarlas. Las no conformidades de tus sucursales se trabajan en No conformidades.">
               <Eye className="h-4 w-4" /> Solo lectura
             </span>
             )}
-            {esCertificaciones && !datos.emitida_en && (
+            {editaAuditorias && !datos.emitida_en && (
               <>
                 {datos.estado === 'planificada' && (
                   <Boton ocupado={accionEstado.ocupado} onClick={() => void cambiarEstado('en_curso')}>
