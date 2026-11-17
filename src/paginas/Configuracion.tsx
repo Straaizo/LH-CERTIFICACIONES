@@ -1,18 +1,12 @@
 import { useState } from 'react'
 import { useSesionActiva } from '../contexto/Sesion'
 import { num } from '../formato'
-import type { Rol } from '../tipos'
-import { EncabezadoPagina, Insignia, Pestanas, Tarjeta, Vacio, type Tono } from '../componentes/ui'
+import { EncabezadoPagina, Insignia, Pestanas, Tarjeta, Vacio } from '../componentes/ui'
 
-type Vista = 'sitios' | 'protocolos' | 'categorias' | 'analisis' | 'agua' | 'usuarios'
+type Vista = 'sitios' | 'protocolos' | 'categorias' | 'analisis' | 'agua'
 
 const AMBITOS: Record<string, string> = {
   ambos: 'Campo y planta', campo: 'Campo', planta: 'Planta', social: 'Social' }
-const ROLES: Record<Rol, { etiqueta: string; tono: Tono }> = {
-  certificaciones: { etiqueta: 'Certificaciones', tono: 'verde' },
-  encargado: { etiqueta: 'Encargado', tono: 'azul' },
-  lectura: { etiqueta: 'Solo lectura', tono: 'gris' },
-}
 
 function etiquetaAmbito(a: string) {
   return AMBITOS[a] ?? a
@@ -141,7 +135,7 @@ function TiposAnalisis() {
   return (
     <div className="space-y-4">
       <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-        Límites de demo: pendientes de confirmar con el cliente.
+        Los límites están pendientes de confirmar. Si necesitas cambiarlos, comunícate con TI.
       </p>
       {catalogos.tipos_analisis.map((t) => {
         const limites = catalogos.limites.filter((l) => l.tipo_analisis_id === t.id)
@@ -210,32 +204,13 @@ function FuentesAgua() {
   )
 }
 
-function Usuarios() {
-  const { catalogos } = useSesionActiva()
-  return (
-    <Tarjeta>
-      <p className="mb-2 text-sm text-slate-500">
-        Usuarios con acceso a Certificaciones. El acceso, los permisos y las sucursales de cada uno se asignan en el portal web.
-      </p>
-      <ul className="divide-y divide-slate-100">
-        {catalogos.usuarios.map((u) => (
-          <li key={u.id} className="flex items-center justify-between gap-2 py-2">
-            <span className="text-sm text-slate-800">{u.nombre}</span>
-            <Insignia tono={ROLES[u.rol]?.tono ?? 'gris'}>{ROLES[u.rol]?.etiqueta ?? u.rol}</Insignia>
-          </li>
-        ))}
-      </ul>
-    </Tarjeta>
-  )
-}
-
 export function Configuracion() {
   const [vista, setVista] = useState<Vista>('sitios')
   return (
     <div className="space-y-4">
       <EncabezadoPagina sinFiltros titulo="Configuración" descripcion="Catálogos del sistema (solo lectura)" />
       <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
-        Sucursales, empresas, temporadas y usuarios vienen de las tablas generales de la empresa: se administran fuera de esta aplicación.
+        Sucursales, empresas y temporadas vienen de las tablas generales de la empresa. Los usuarios, sus permisos y sucursales se administran en el portal web.
       </p>
       <Pestanas
         opciones={[
@@ -244,7 +219,6 @@ export function Configuracion() {
           { valor: 'categorias', etiqueta: 'Categorías de documentos' },
           { valor: 'analisis', etiqueta: 'Tipos de análisis' },
           { valor: 'agua', etiqueta: 'Fuentes de agua' },
-          { valor: 'usuarios', etiqueta: 'Usuarios y roles' },
         ]}
         valor={vista}
         onCambio={setVista}
@@ -254,7 +228,6 @@ export function Configuracion() {
       {vista === 'categorias' && <Categorias />}
       {vista === 'analisis' && <TiposAnalisis />}
       {vista === 'agua' && <FuentesAgua />}
-      {vista === 'usuarios' && <Usuarios />}
     </div>
   )
 }
