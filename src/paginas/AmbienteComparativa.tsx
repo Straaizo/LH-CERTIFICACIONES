@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { api, descargarArchivo } from '../api'
 import { useSesionActiva } from '../contexto/Sesion'
+import { useSucursalDescarga } from '../componentes/ElegirSucursal'
 import { useAccion } from '../hooks'
 import { Boton, Campo, MensajeError, Tarjeta, Vacio, claseEntrada } from '../componentes/ui'
 import { Selector } from '../componentes/Desplegable'
@@ -426,15 +427,17 @@ export function BotonInformePdf({ temporadaId, anteriorId, variante = 'secundari
 }) {
   const { filtros } = useSesionActiva()
   const { ocupado, error, ejecutar } = useAccion()
+  const sucursal = useSucursalDescarga()
   return (
     <>
       <Boton variante={variante} ocupado={ocupado} icono={<FileDown className="h-4 w-4" />}
-        onClick={() => void ejecutar(() => descargarArchivo('/ambiente/informe.pdf', {
-          empresa_id: filtros.empresa_id, unidad_id: filtros.unidad_id,
+        onClick={() => sucursal.pedir((unidadId) => void ejecutar(() => descargarArchivo('/ambiente/informe.pdf', {
+          empresa_id: filtros.empresa_id, unidad_id: unidadId,
           temporada_id: temporadaId ?? filtros.temporada_id, anterior_id: anteriorId,
-        }, 'Informe medio ambiente.pdf'))}>
+        }, 'Informe medio ambiente.pdf')))}>
         Descargar PDF
       </Boton>
+      {sucursal.modal}
       {error && <span className="text-sm text-red-700">{error}</span>}
     </>
   )

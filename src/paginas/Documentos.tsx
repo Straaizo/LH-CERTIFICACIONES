@@ -9,6 +9,7 @@ import { useAccion, useDatos } from '../hooks'
 import { fecha, fechaYHora } from '../formato'
 import type { AnalisisDocumento, Documento, FichaCertificado, PropuestaCertificado, SeccionDoc } from '../tipos'
 import { useSesionActiva } from '../contexto/Sesion'
+import { useSucursalDescarga } from '../componentes/ElegirSucursal'
 import { AvisoTemporada,
   Boton, Campo, CampoArchivo, Cargando, EncabezadoPagina, Insignia, MensajeError, Modal, Pestanas, Vacio, claseEntrada,
   useAviso,
@@ -54,6 +55,7 @@ export function Documentos({ embebido = false }: { embebido?: boolean }) {
   const [carpetaAbierta, setCarpetaAbierta] = useState(false)
   const { avisar, nodo: nodoAviso } = useAviso()
   const exportar = useAccion()
+  const sucursal = useSucursalDescarga()
 
   const { datos, cargando, error, recargar } = useDatos<Documento[]>('/documentos', {
     empresa_id: filtros.empresa_id,
@@ -75,13 +77,15 @@ export function Documentos({ embebido = false }: { embebido?: boolean }) {
         variante="secundario"
         icono={<FileSpreadsheet className="h-4 w-4" />}
         ocupado={exportar.ocupado}
-        onClick={() => exportar.ejecutar(() => descargarArchivo('/documentos/exportar', { ...filtros }, 'documentos-fijos.xlsx'))}
+        onClick={() => sucursal.pedir((unidadId) => void exportar.ejecutar(() =>
+          descargarArchivo('/documentos/exportar', { ...filtros, unidad_id: unidadId }, 'documentos-fijos.xlsx')))}
       >
         Exportar listado Excel
       </Boton>
       <Boton variante="secundario" icono={<FolderArchive className="h-4 w-4" />} onClick={() => setCarpetaAbierta(true)}>
         Carpeta para el auditor
       </Boton>
+      {sucursal.modal}
       {editaDocumentos && (
         <Boton icono={<Plus className="h-4 w-4" />} onClick={() => setNuevoAbierto(true)}>
           Nuevo documento fijo
@@ -797,12 +801,14 @@ function NuevoDocumento({ seccionInicial, onCerrar, onCreado }: {
 // ---------- Carpeta para el auditor ----------
 
 function CarpetaAuditor({ onCerrar }: { onCerrar: () => void }) {
-  const { catalogos, filtros, veTodo } = useSesionActiva()
+  const { catalogos, filtros } = useSesionActiva()
   const [protocoloId, setProtocoloId] = useState<string | undefined>(filtros.protocolo_id ?? catalogos.protocolos[0]?.id)
   const [empresaId, setEmpresaId] = useState<number | undefined>(
     filtros.empresa_id ?? catalogos.unidades.find((u) => u.id === filtros.unidad_id)?.empresa_id ?? catalogos.empresas[0]?.id,
   )
-  const [unidadId, setUnidadId] = useState<number | undefined>(filtros.unidad_id)
+  const [unidadId, setUnidadId] = useState<number | undefined>(
+    filtros.unidad_id ?? (catalogos.unidades.length === 1 ? catalogos.unidades[0].id : undefined),
+  )
   const [temporadaId, setTemporadaId] = useState<number | undefined>(
     filtros.temporada_id ?? catalogos.temporadas.find((t) => t.actual)?.id,
   )
@@ -817,7 +823,7 @@ function CarpetaAuditor({ onCerrar }: { onCerrar: () => void }) {
   const generar = async (e: FormEvent) => {
     e.preventDefault()
     if (!protocoloId || !protocoloValido || !empresaId || !temporadaId) return accion.setError('Elige protocolo, empresa y temporada')
-    if (!veTodo && !unidadId) return accion.setError('Indica una de tus sucursales')
+    if (!unidadId) return accion.setError('Elige a qué sucursal corresponde la carpeta')
     await accion.ejecutar(() =>
       descargarArchivo('/carpeta-auditor', {
         protocolo_id: protocoloId,
@@ -846,9 +852,9 @@ function CarpetaAuditor({ onCerrar }: { onCerrar: () => void }) {
               {catalogos.empresas.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
             </Selector>
           </Campo>
-          <Campo etiqueta={veTodo ? 'Sucursal (opcional)' : 'Sucursal (obligatoria)'}>
-            <Selector className={claseEntrada} value={unidadId ?? ''} required={!veTodo} onChange={(e) => setUnidadId(Number(e.target.value) || undefined)}>
-              <option value="">{veTodo ? 'Todas las sucursales' : 'Elige una sucursal'}</option>
+          <Campo etiqueta="Sucursal">
+            <Selector className={claseEntrada} value={unidadId ?? ''} required onChange={(e) => setUnidadId(Number(e.target.value) || undefined)}>
+              <option value="" disabled>Elige una sucursal</option>
               {unidades.map((u) => <option key={u.id} value={u.id}>{u.nombre} ({u.tipo})</option>)}
             </Selector>
           </Campo>
