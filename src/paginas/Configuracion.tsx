@@ -159,7 +159,7 @@ function TiposAnalisis() {
                     <tr className="border-b border-slate-200 text-xs text-slate-500">
                       <th className="py-2 pr-3 font-medium">Parámetro</th>
                       <th className="px-3 py-2 font-medium">Rango permitido</th>
-                      <th className="px-3 py-2 font-medium">Sucursal</th>
+                      <th className="px-3 py-2 font-medium">Unidad</th>
                       <th className="px-3 py-2 font-medium">Norma</th>
                     </tr>
                   </thead>

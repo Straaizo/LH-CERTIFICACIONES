@@ -136,7 +136,7 @@ function Resultado({ r }: { r: Comparacion }) {
         <Insignia tono="rojo">{n('no_apto')} no se pueden enviar</Insignia>
         {n('revisar') > 0 && <Insignia tono="amarillo">{n('revisar')} por revisar</Insignia>}
         <span className="text-slate-500">
-          {r.fruta.toLowerCase()} · {r.detectados} residuos detectados · ASOEX {r.asoex.fecha ? fecha(r.asoex.fecha) : r.asoex.nombre_archivo}
+          {r.fruta.toLowerCase()} · {r.detectados} {r.detectados === 1 ? 'residuo detectado' : 'residuos detectados'} · ASOEX {r.asoex.fecha ? fecha(r.asoex.fecha) : r.asoex.nombre_archivo}
         </span>
       </div>
 
@@ -519,7 +519,7 @@ export function ResiduosDestinos() {
                     lectura.punto && `Cuartel: ${lectura.punto}`,
                     lectura.productor && `${lectura.productor}${lectura.codigo_sucursal !== null ? ` (${lectura.codigo_sucursal})` : ''}`,
                     lectura.fecha_muestreo && `Muestreo: ${fecha(lectura.fecha_muestreo)}`,
-                    `${lectura.residuos.length} residuos`].filter(Boolean).join(' · ')}
+                    `${lectura.residuos.length} ${lectura.residuos.length === 1 ? 'residuo' : 'residuos'}`].filter(Boolean).join(' · ')}
                 </p>
                 {lectura.advertencias.map((a) => <p key={a} className="mt-1 text-amber-800">{a}</p>)}
                 <p className="mt-1 text-emerald-800">Revisa los valores antes de comparar.</p>

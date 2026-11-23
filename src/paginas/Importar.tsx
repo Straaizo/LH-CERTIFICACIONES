@@ -512,7 +512,7 @@ function CargaChecklist({ protocoloFijo }: { protocoloFijo?: { codigo: string; n
           <ListaAdvertencias titulo="Advertencias (revisar)" lista={resultado.advertencias} tono="ambar" />
           {resultado.confirmado ? (
             <p className="flex items-center gap-2 text-sm font-medium text-emerald-800">
-              <CheckCircle2 className="h-4 w-4" /> Importado: {resultado.nuevos} puntos nuevos en {resultado.protocolo_nombre} {resultado.version}.
+              <CheckCircle2 className="h-4 w-4" /> Importado: {resultado.nuevos} puntos de control guardados en {resultado.protocolo_nombre} {resultado.version}.
             </p>
           ) : (
             <Boton ocupado={confirmacion.ocupado} disabled={!protocolo} onClick={() => void confirmar()} className="w-full sm:w-auto">

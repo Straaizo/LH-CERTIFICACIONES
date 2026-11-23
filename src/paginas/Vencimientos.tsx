@@ -210,10 +210,6 @@ export function Vencimientos() {
               </div>
             </>
           )}
-
-          <p className="mt-6 text-xs text-slate-500">
-            Aviso por correo a 60, 30 y 7 días del vencimiento: lo enviará un proceso diario (servicio de correo pendiente de definir).
-          </p>
         </>
       )}
     </div>
