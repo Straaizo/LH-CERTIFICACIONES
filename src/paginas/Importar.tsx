@@ -157,7 +157,9 @@ export function ImportarBrcgs({ onConfirmada }: { onConfirmada?: () => void }) {
   const ajustar = (hoja: string, campo: 'fecha' | 'auditor', valor: string, actualizar = true) => {
     const nuevos = { ...ajustes, [hoja]: { ...ajustes[hoja], [campo]: valor || undefined } }
     setAjustes(nuevos)
-    if (actualizar) void previsualizar(unidadId, temporadaId, nuevos)
+    // Al escribir la fecha a mano, el año pasa por valores incompletos (0002, 0020…): solo se actualiza con un año real
+    const anioIncompleto = campo === 'fecha' && valor !== '' && Number(valor.slice(0, 4)) < 1900
+    if (actualizar && !anioIncompleto) void previsualizar(unidadId, temporadaId, nuevos)
   }
 
   const confirmar = async () => {
