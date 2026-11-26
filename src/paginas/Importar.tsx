@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, CheckCircle2, Eye, FileSpreadsheet, Upload, XCircle } from 'lucide-react'
 import { api } from '../api'
-import { AvisoTemporada,
+import {
   BarraPorcentaje,
   Boton,
   Campo,
@@ -83,11 +83,15 @@ interface ResultadoChecklist {
   version_id?: string
 }
 
-function formulario(archivo: File, confirmar: boolean, unidadId?: number | '') {
+type Ajustes = Record<string, { fecha?: string; auditor?: string }>
+
+function formulario(archivo: File, confirmar: boolean, unidadId?: number | '', temporadaId?: number, ajustes?: Ajustes) {
   const datos = new FormData()
   datos.append('archivo', archivo)
   datos.append('confirmar', confirmar ? 'true' : 'false')
   if (unidadId) datos.append('unidad_id', String(unidadId))
+  if (temporadaId) datos.append('temporada_id', String(temporadaId))
+  if (ajustes && Object.keys(ajustes).length) datos.append('ajustes', JSON.stringify(ajustes))
   return datos
 }
 
@@ -130,25 +134,36 @@ function ListaAdvertencias({ titulo, lista, tono }: { titulo: string; lista: str
 
 /** Importa auditorías internas BRCGS hechas en Excel. Se usa dentro de una ventana en Auditorías internas. */
 export function ImportarBrcgs({ onConfirmada }: { onConfirmada?: () => void }) {
-  const { catalogos, recargarCatalogos } = useSesionActiva()
+  const { catalogos, filtros, recargarCatalogos } = useSesionActiva()
   const [archivo, setArchivo] = useState<File | null>(null)
   const [unidadId, setUnidadId] = useState<number | ''>('')
+  // Temporada solo de esta importación: parte de la elegida arriba, pero se puede cambiar aquí
+  const [temporadaId, setTemporadaId] = useState<number | undefined>(
+    filtros.temporada_id ?? catalogos.temporadas.find((t) => t.actual)?.id,
+  )
+  const [ajustes, setAjustes] = useState<Ajustes>({})
   const [resultado, setResultado] = useState<ResultadoBrcgs | null>(null)
   const vista = useAccion()
   const confirmacion = useAccion()
   const { avisar, nodo } = useAviso()
 
-  const previsualizar = async (unidad: number | '' = unidadId) => {
+  const previsualizar = async (unidad: number | '' = unidadId, temporada = temporadaId, datos = ajustes) => {
     if (!archivo) return
     await vista.ejecutar(async () => {
-      setResultado(await api.post<ResultadoBrcgs>('/importaciones/brcgs', formulario(archivo, false, unidad)))
+      setResultado(await api.post<ResultadoBrcgs>('/importaciones/brcgs', formulario(archivo, false, unidad, temporada, datos)))
     })
+  }
+
+  const ajustar = (hoja: string, campo: 'fecha' | 'auditor', valor: string, actualizar = true) => {
+    const nuevos = { ...ajustes, [hoja]: { ...ajustes[hoja], [campo]: valor || undefined } }
+    setAjustes(nuevos)
+    if (actualizar) void previsualizar(unidadId, temporadaId, nuevos)
   }
 
   const confirmar = async () => {
     if (!archivo) return
     const ok = await confirmacion.ejecutar(async () => {
-      setResultado(await api.post<ResultadoBrcgs>('/importaciones/brcgs', formulario(archivo, true, unidadId)))
+      setResultado(await api.post<ResultadoBrcgs>('/importaciones/brcgs', formulario(archivo, true, unidadId, temporadaId, ajustes)))
       await recargarCatalogos()
     })
     if (ok) {
@@ -163,13 +178,26 @@ export function ImportarBrcgs({ onConfirmada }: { onConfirmada?: () => void }) {
   return (
     <div>
       <div className="space-y-3">
-        <AvisoTemporada />
+        <Campo etiqueta="Temporada de la importación" ayuda="Solo para esta importación: no cambia la temporada elegida arriba.">
+          <Selector
+            className={claseEntrada}
+            value={temporadaId ?? ''}
+            onChange={(e) => {
+              const valor = Number(e.target.value) || undefined
+              setTemporadaId(valor)
+              if (resultado) void previsualizar(unidadId, valor)
+            }}
+          >
+            {catalogos.temporadas.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+          </Selector>
+        </Campo>
         <Campo etiqueta="Planilla (.xlsx)" ayuda="Cada hoja es una auditoría: lugar, auditor, fecha, alcance y checklist.">
           <SelectorPlanilla
             onCambio={(f) => {
               setArchivo(f)
               setResultado(null)
               setUnidadId('')
+              setAjustes({})
             }}
           />
         </Campo>
@@ -207,7 +235,14 @@ export function ImportarBrcgs({ onConfirmada }: { onConfirmada?: () => void }) {
               </Campo>
             )}
             {resultado.hojas.map((hoja) => (
-              <VistaHoja key={hoja.hoja} hoja={hoja} />
+              <VistaHoja
+                key={hoja.hoja}
+                hoja={hoja}
+                editable={!resultado.confirmado && !hoja.ya_importada}
+                auditor={ajustes[hoja.hoja]?.auditor}
+                fechaManual={ajustes[hoja.hoja]?.fecha}
+                onAjustar={(campo, valor, actualizar) => ajustar(hoja.hoja, campo, valor, actualizar)}
+              />
             ))}
             {!resultado.confirmado ? (
               <div>
@@ -237,7 +272,14 @@ export function ImportarBrcgs({ onConfirmada }: { onConfirmada?: () => void }) {
   )
 }
 
-function VistaHoja({ hoja }: { hoja: HojaVistaPrevia }) {
+function VistaHoja({ hoja, editable, auditor, fechaManual, onAjustar }: {
+  hoja: HojaVistaPrevia
+  editable: boolean
+  /** Auditor escrito a mano (se manda al salir del campo) */
+  auditor?: string
+  fechaManual?: string
+  onAjustar: (campo: 'fecha' | 'auditor', valor: string, actualizar?: boolean) => void
+}) {
   const [soloAdvertencias, setSoloAdvertencias] = useState(false)
   const [verItems, setVerItems] = useState(false)
   const items = soloAdvertencias ? hoja.items.filter((i) => i.advertencias.length) : hoja.items
@@ -268,8 +310,29 @@ function VistaHoja({ hoja }: { hoja: HojaVistaPrevia }) {
           etiqueta="Sucursal detectada"
           valor={hoja.unidad?.nombre ?? <span className="font-medium text-red-700">No reconocida</span>}
         />
-        <Dato etiqueta="Auditor" valor={hoja.auditor || '—'} />
-        <Dato etiqueta="Fecha" valor={fecha(hoja.fecha)} />
+        <Dato
+          etiqueta="Auditor"
+          valor={editable ? (
+            <input
+              className={`${claseEntrada} mt-0.5 py-1.5`}
+              placeholder="Nombre del auditor"
+              value={auditor ?? hoja.auditor}
+              onChange={(e) => onAjustar('auditor', e.target.value, false)}
+              onBlur={(e) => { if (e.target.value !== hoja.auditor) onAjustar('auditor', e.target.value) }}
+            />
+          ) : (hoja.auditor || '—')}
+        />
+        <Dato
+          etiqueta="Fecha"
+          valor={editable ? (
+            <input
+              type="date"
+              className={`${claseEntrada} mt-0.5 py-1.5 ${hoja.fecha ? '' : 'border-red-300'}`}
+              value={fechaManual ?? hoja.fecha ?? ''}
+              onChange={(e) => onAjustar('fecha', e.target.value)}
+            />
+          ) : fecha(hoja.fecha)}
+        />
         <Dato etiqueta="Temporada" valor={hoja.temporada ?? '—'} />
         <Dato etiqueta="Cláusulas" valor={hoja.secciones.join(', ') || '—'} />
       </dl>
