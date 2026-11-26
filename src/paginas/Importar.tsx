@@ -342,6 +342,13 @@ function VistaHoja({ hoja, editable, auditor, fechaManual, onAjustar }: {
         <Insignia>N/A: {hoja.na}</Insignia>
         <Insignia>Sin respuesta: {hoja.sin_respuesta}</Insignia>
       </div>
+      {editable && (
+        <p className="mt-2 text-xs text-slate-600">
+          {hoja.sin_respuesta
+            ? `Quedará en curso: tiene ${hoja.sin_respuesta} ${hoja.sin_respuesta === 1 ? 'punto' : 'puntos'} sin responder para completar en la aplicación.`
+            : 'Está completa: quedará cerrada, con el informe emitido.'}
+        </p>
+      )}
       <div className="mt-2">
         <BarraPorcentaje valor={hoja.cumplimiento} tono="auto" />
       </div>

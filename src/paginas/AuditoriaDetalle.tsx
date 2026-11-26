@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, ChevronDown, ChevronRight, Download, Eye, FileCheck, Search } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ChevronDown, ChevronRight, Download, Eye, FileCheck, LockOpen, Search } from 'lucide-react'
 import { api, descargarArchivo } from '../api'
 import {
   BarraPorcentaje,
@@ -69,6 +69,7 @@ export function AuditoriaDetalle() {
   const [plegadas, setPlegadas] = useState<Set<string>>(new Set())
   const [descargando, setDescargando] = useState(false)
   const [emitiendo, setEmitiendo] = useState(false)
+  const [reabriendo, setReabriendo] = useState(false)
   const accionEstado = useAccion()
   const { avisar, nodo } = useAviso()
 
@@ -191,6 +192,11 @@ export function AuditoriaDetalle() {
               <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm" title="Responder auditorías requiere permiso para editarlas. Las no conformidades de tus sucursales se trabajan en No conformidades.">
               <Eye className="h-4 w-4" /> Solo lectura
             </span>
+            )}
+            {editaAuditorias && (datos.emitida_en || datos.estado === 'cerrada') && (
+              <Boton icono={<LockOpen className="h-4 w-4" />} onClick={() => setReabriendo(true)}>
+                Reabrir auditoría
+              </Boton>
             )}
             {editaAuditorias && !datos.emitida_en && (
               <>
@@ -371,6 +377,17 @@ export function AuditoriaDetalle() {
           onCerrar={() => setDescargando(false)}
         />
       )}
+      {reabriendo && (
+        <ModalReabrir
+          auditoriaId={datos.id}
+          onCerrar={() => setReabriendo(false)}
+          onReabierta={() => {
+            setReabriendo(false)
+            avisar('Auditoría reabierta: ya puedes completar las respuestas')
+            void recargar()
+          }}
+        />
+      )}
       {emitiendo && (
         <ModalEmitir
           auditoriaId={datos.id}
@@ -470,6 +487,35 @@ function ModalDescarga({ auditoriaId, clausulas, actual, onCerrar }: {
             onClick={() => void descargar()}
           >
             Descargar
+          </Boton>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+function ModalReabrir({ auditoriaId, onCerrar, onReabierta }: {
+  auditoriaId: string
+  onCerrar: () => void
+  onReabierta: () => void
+}) {
+  const { ocupado, error, ejecutar } = useAccion()
+  const reabrir = async () => {
+    const ok = await ejecutar(() => api.post(`/auditorias/${auditoriaId}/reabrir`))
+    if (ok) onReabierta()
+  }
+  return (
+    <Modal abierto titulo="Reabrir auditoría" onCerrar={onCerrar} ancho="max-w-md">
+      <div className="space-y-3 text-sm">
+        <p className="text-slate-700">
+          La auditoría vuelve a quedar <strong>en curso</strong> para completar o corregir sus respuestas. Las no
+          conformidades ya creadas se mantienen con su plazo y responsable. Cuando termines, vuelve a emitir el informe.
+        </p>
+        <MensajeError error={error} />
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Boton variante="secundario" onClick={onCerrar}>Cancelar</Boton>
+          <Boton icono={<LockOpen className="h-4 w-4" />} ocupado={ocupado} onClick={() => void reabrir()}>
+            Reabrir auditoría
           </Boton>
         </div>
       </div>
